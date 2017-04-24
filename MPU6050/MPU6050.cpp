@@ -37,8 +37,8 @@
  * @{
  */
  
-uint8_t currentAcceleroRange = 4;
-uint8_t currentGyroRange = 4;
+uint8_t currentAcceleroRange_MPU6050 = 4;
+uint8_t currentGyroRange_MPU6050 = 4;
 
 /** Power on and prepare for general usage.
  * This will activate the device and take it out of sleep mode (which must be done
@@ -222,20 +222,8 @@ void MPU6050_SetSleepModeStatus(FunctionalState NewState)
  */
 void MPU6050_GetRawAccelGyro(float AccelGyro[])
 {
-    u8 tmpBuffer[14];
-		int i;
-		/*---- Re_Init ----*/
-			I2C_InitTypeDef I2C_InitStructure;
-			I2C_InitStructure.I2C_Mode = I2C_Mode_I2C;
-			I2C_InitStructure.I2C_DutyCycle = I2C_DutyCycle_2;
-			I2C_InitStructure.I2C_OwnAddress1 = MPU6050_DEFAULT_ADDRESS; // MPU6050 7-bit adress = 0x68, 8-bit adress = 0xD0;
-			I2C_InitStructure.I2C_Ack = I2C_Ack_Enable;
-			I2C_InitStructure.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
-			I2C_InitStructure.I2C_ClockSpeed = MPU6050_I2C_Speed;
-			/* Apply I2C configuration after enabling it */
-				I2C_Init(MPU6050_I2C, &I2C_InitStructure);
-			/* I2C Peripheral Enable */
-				I2C_Cmd(MPU6050_I2C, ENABLE);
+  u8 tmpBuffer[14];
+	int i;
 		
 		/*---- Get Data ----*/
     MPU6050_I2C_BufferRead(MPU6050_DEFAULT_ADDRESS, tmpBuffer, MPU6050_RA_ACCEL_XOUT_H, 14);
@@ -247,22 +235,22 @@ void MPU6050_GetRawAccelGyro(float AccelGyro[])
 					AccelGyro[i - 1] = ((s16) ((u16) tmpBuffer[2 * i] << 8) + tmpBuffer[2 * i + 1]);
 		/*---- divider ----*/
 		/*---------ACCELERO--------*/
-		if (currentAcceleroRange == MPU6050_ACCELERO_RANGE_2G) {
+		if (currentAcceleroRange_MPU6050 == MPU6050_ACCELERO_RANGE_2G) {
         AccelGyro[0]=(float) AccelGyro[0] / 16384.0 * 9.81;
         AccelGyro[1]=(float) AccelGyro[1] / 16384.0 * 9.81;
         AccelGyro[2]=(float) AccelGyro[2] / 16384.0 * 9.81;
         }
-    if (currentAcceleroRange == MPU6050_ACCELERO_RANGE_4G){
+    if (currentAcceleroRange_MPU6050 == MPU6050_ACCELERO_RANGE_4G){
         AccelGyro[0]=(float) AccelGyro[0] / 8192.0 * 9.81;
         AccelGyro[1]=(float) AccelGyro[1] / 8192.0 * 9.81;
         AccelGyro[2]=(float) AccelGyro[2] / 8192.0 * 9.81;
         }
-    if (currentAcceleroRange == MPU6050_ACCELERO_RANGE_8G){
+    if (currentAcceleroRange_MPU6050 == MPU6050_ACCELERO_RANGE_8G){
         AccelGyro[0]=(float) AccelGyro[0] / 4096.0 * 9.81;
         AccelGyro[1]=(float) AccelGyro[1] / 4096.0 * 9.81;
         AccelGyro[2]=(float) AccelGyro[2] / 4096.0 * 9.81;
         }
-    if (currentAcceleroRange == MPU6050_ACCELERO_RANGE_16G){
+    if (currentAcceleroRange_MPU6050 == MPU6050_ACCELERO_RANGE_16G){
         AccelGyro[0]=(float) AccelGyro[0] / 2048.0 * 9.81;
         AccelGyro[1]=(float) AccelGyro[1] / 2048.0 * 9.81;
         AccelGyro[2]=(float) AccelGyro[2] / 2048.0 * 9.81;
@@ -271,22 +259,22 @@ void MPU6050_GetRawAccelGyro(float AccelGyro[])
         AccelGyro[1]*=2;   
         AccelGyro[2]*=2;
 		/*-----------GYRO------------*/
-		if (currentGyroRange == MPU6050_GYRO_RANGE_250) {
+		if (currentGyroRange_MPU6050 == MPU6050_GYRO_RANGE_250) {
         AccelGyro[3]=(float)AccelGyro[3] / 7505.7;
         AccelGyro[4]=(float)AccelGyro[4] / 7505.7;
         AccelGyro[5]=(float)AccelGyro[5] / 7505.7;
         }
-    if (currentGyroRange == MPU6050_GYRO_RANGE_500){
+    if (currentGyroRange_MPU6050 == MPU6050_GYRO_RANGE_500){
         AccelGyro[3]=(float)AccelGyro[3] / 3752.9;
         AccelGyro[4]=(float)AccelGyro[4] / 3752.9;
         AccelGyro[5]=(float)AccelGyro[5] / 3752.9;
         }
-    if (currentGyroRange == MPU6050_GYRO_RANGE_1000){
+    if (currentGyroRange_MPU6050 == MPU6050_GYRO_RANGE_1000){
         AccelGyro[3]=(float)AccelGyro[3] / 1879.3;;
         AccelGyro[4]=(float)AccelGyro[4] / 1879.3;
         AccelGyro[5]=(float)AccelGyro[5] / 1879.3;
         }
-    if (currentGyroRange == MPU6050_GYRO_RANGE_2000){
+    if (currentGyroRange_MPU6050 == MPU6050_GYRO_RANGE_2000){
         AccelGyro[3]=(float)AccelGyro[3] / 939.7;
         AccelGyro[4]=(float)AccelGyro[4] / 939.7;
         AccelGyro[5]=(float)AccelGyro[5] / 939.7;
@@ -395,7 +383,7 @@ void MPU6050_I2C_Init()
     /* I2C configuration */
     I2C_InitStructure.I2C_Mode = I2C_Mode_I2C;
     I2C_InitStructure.I2C_DutyCycle = I2C_DutyCycle_2;
-    I2C_InitStructure.I2C_OwnAddress1 = MPU6050_DEFAULT_ADDRESS; // MPU6050 7-bit adress = 0x68, 8-bit adress = 0xD0;
+    I2C_InitStructure.I2C_OwnAddress1 = 0x00; // MPU6050 7-bit adress = 0x68, 8-bit adress = 0xD0;
     I2C_InitStructure.I2C_Ack = I2C_Ack_Enable;
     I2C_InitStructure.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
     I2C_InitStructure.I2C_ClockSpeed = MPU6050_I2C_Speed;

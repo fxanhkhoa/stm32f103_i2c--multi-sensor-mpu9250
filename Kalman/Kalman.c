@@ -13,7 +13,7 @@
 *    Description:    Initialize the kalman Filter parameters.       * 
 ********************************************************************/  
 
-void kalman_init(kalman *filter, double R_angle, double Q_gyro, double Q_angle) // double dt,
+void kalman_init(kalman *filter, float R_angle, float Q_gyro, float Q_angle) // float dt,
 { 
     // Initialize the two states, the angle and the gyro bias. As a 
     // byproduct of computing the angle, we also have an unbiased 
@@ -57,14 +57,14 @@ void kalman_init(kalman *filter, double R_angle, double Q_gyro, double Q_angle) 
 *                    gyro. Also updates the current rate and angle  * 
 *                    estimate).                                     * 
 ********************************************************************/  
-void kalman_predict(kalman *filter, double dot_angle,  double dt) 
+void kalman_predict(kalman *filter, float dot_angle,  float dt) 
 { 
     // Static so these are kept off the stack. 
-    static double gyro_rate_unbiased; 
-    static double Pdot_00; 
-    static double Pdot_01; 
-    static double Pdot_10; 
-    static double Pdot_11;
+    static float gyro_rate_unbiased; 
+    static float Pdot_00; 
+    static float Pdot_01; 
+    static float Pdot_10; 
+    static float Pdot_11;
     
     // Unbias our gyro. 
     gyro_rate_unbiased= dot_angle - filter->x_bias; 
@@ -96,13 +96,13 @@ void kalman_predict(kalman *filter, double dot_angle,  double dt)
 *                    measurement is available. Updates the estimated * 
 *                    angle that will be used.                        * 
 *********************************************************************/
-void kalman_update(kalman *filter, double angle_measured)
+void kalman_update(kalman *filter, float angle_measured)
 {
     // Static so these are kept off the stack. 
-    static double y;
-    static double S;
-    static double K_0;
-    static double K_1;
+    static float y;
+    static float S;
+    static float K_0;
+    static float K_1;
     
     // Compute the error in the estimate. 
     // Innovation or Measurement Residual 

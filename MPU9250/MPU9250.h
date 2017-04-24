@@ -188,6 +188,9 @@ extern "C" {
 #define MPU9250_GYRO_RANGE_1000     2
 #define MPU9250_GYRO_RANGE_2000     3
 
+#define MFS_14BITS	0
+#define MFS_16BITS	1
+
 // Using the MPU-9250 breakout board, ADO is set to 0
 // Seven-bit device address is 110100 for ADO = 0 and 110101 for ADO = 1
 #define ADO 0

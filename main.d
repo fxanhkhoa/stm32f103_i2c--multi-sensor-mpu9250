@@ -32,6 +32,9 @@
 .\main.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
 .\main.o: .\MPU9250\MPU9250.h
 .\main.o: Main.h
+.\main.o: .\MPU6050\MPU6050.h
+.\main.o: .\MPU6050\HAL_MPU6050.h
+.\main.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdbool.h
 .\main.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\math.h
 .\main.o: .\Kalman\Kalman.c
 .\main.o: .\Kalman\kalman.h

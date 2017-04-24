@@ -1,4 +1,4 @@
-.\mpu6050.o: MPU6050\MPU6050.c
+.\mpu6050.o: MPU6050\MPU6050.cpp
 .\mpu6050.o: MPU6050\MPU6050.h
 .\mpu6050.o: MPU6050\HAL_MPU6050.h
 .\mpu6050.o: .\CMSIS\CM3\DeviceSupport\ST\STM32F10x\stm32f10x.h

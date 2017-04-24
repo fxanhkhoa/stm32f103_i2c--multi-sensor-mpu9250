@@ -10,6 +10,7 @@
 ".\stm32f10x_tim.o"
 ".\mpu9250.o"
 ".\kalman.o"
+".\mpu6050.o"
 ".\startup_stm32f10x_md.o"
 ".\system_stm32f10x.o"
 --strict --scatter ".\stm32f103_i2c.sct"

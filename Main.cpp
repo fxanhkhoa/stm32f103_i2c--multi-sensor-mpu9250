@@ -5,7 +5,7 @@
 #include "MPU9250.h"
 #include "stm32f10x_tim.h"
 #include "Main.h"
-//#include "MPU6050.h"
+#include "MPU6050.h"
 #include <math.h>
 #include "Kalman.c"
 
@@ -14,13 +14,16 @@
 #define declinationAngle  0.007563
 #define alpha  0.5
 
-static void prvSetupHardware( void );
+//static void prvSetupHardware( void );
 void sleep(long i);
 void led_toggle(void);
 float Distance(float x, float y);
 int Get_Central(kalman p, kalman r, kalman y);
+void LowPass_Accel(Accel fAcc[]);
+void LowPass_Gyro(Gyro fGyro[]);
+void LowPass_Mag(Mag fMag[]);
 
-uint32_t timer, time_pre =0, time_now = 0;
+uint16_t timer, time_pre =0, time_now = 0;
 
 
 	
@@ -99,6 +102,8 @@ int main()
     I2C_Init(MPU9250_I2C, &I2C_InitStructure);
     /* I2C Peripheral Enable */
     I2C_Cmd(MPU9250_I2C, ENABLE);
+		
+		MPU6050_I2C_Init();
 /**************************************************************************************************
 *											Timer
 **************************************************************************************************/
@@ -126,7 +131,7 @@ int main()
 /**************************************************************************************************
 *											Check_Connection
 **************************************************************************************************/
-	float *MCali = new float[3];
+	//float *MCali = new float[3];
 		U_Print_Char(USART1,"let's go\n");
 			//MPU6050_I2C_Init();
 		/*----- Check Connection of MPU9250 -----*/
@@ -183,31 +188,19 @@ int main()
 		else
 			U_Print_Char(USART1, "Check Connection AK\n");
 		AK8963_turn_off(1);
+		
+		if (MPU6050_TestConnection())
+			U_Print_Char(USART1, "Found MPU6050 \n");
+		MPU6050_Initialize();
+		U_Print_Char(USART1, "Initialized...\n");
 /**************************************************************************************************
 *											Variables Init
 **************************************************************************************************/
-	float angle[3],
-				*RawAccel = new float[3],
-				*RawGyro = new float[3],
-				*Mag = new float[3],
-				*fRawAccel = new float[3],
-				*fRawGyro = new float[3],
-				*fMag = new float[3];
-				//declinationAngle = 0.0404;
-				Mag[0] = Mag[1] = Mag[2] = 0;
-				angle[0] = angle[1] = angle[2] = 900;
-	
-	float angle1[3],
-				*RawAccel1 = new float[3],
-				*RawGyro1 = new float[3],
-				*Mag1 = new float[3],
-				*fRawAccel1 = new float[3],
-				*fRawGyro1 = new float[3],
-				*fMag1 = new float[3];
-				//declinationAngle = 0.0404;
-				Mag1[0] = Mag1[1] = Mag1[2] = 0;
-				angle1[0] = angle1[1] = angle1[2] = 900;
-	int flag = -5;			
+	Accel fAcc[3];
+	Gyro fGyro[3];
+	Mag fMag[2];
+	Angle angle[3];
+	char flag = 0;			
 	/********* Kalman Init *********/
 		kalman filter_pitch;
 		kalman filter_roll;
@@ -216,7 +209,11 @@ int main()
 		kalman filter_pitch1;
 		kalman filter_roll1;
 		kalman filter_yaw1;	
-				
+		
+		kalman filter_pitch2;
+		kalman filter_roll2;
+		kalman filter_yaw2;
+	
 		time_pre = 0;
 		time_now = 0;
 /**************************************************************************************************
@@ -230,63 +227,35 @@ int main()
 		kalman_init(&filter_pitch1, R_matrix, Q_Gyro_matrix, Q_Accel_matrix);
 		kalman_init(&filter_roll1, R_matrix, Q_Gyro_matrix, Q_Accel_matrix);
 		kalman_init(&filter_yaw1, R_matrix, Q_Gyro_matrix, Q_Accel_matrix);
+		
+		kalman_init(&filter_pitch2, R_matrix, Q_Gyro_matrix, Q_Accel_matrix);
+		kalman_init(&filter_roll2, R_matrix, Q_Gyro_matrix, Q_Accel_matrix);
+		kalman_init(&filter_yaw2, R_matrix, Q_Gyro_matrix, Q_Accel_matrix);
 	while (1)
 	{
 /**************************************************************************************************
 *											Get Central
 **************************************************************************************************/
-		if (((angle[1] *Rad2Dree) < 100) && ((angle[2] *Rad2Dree) < 300))	flag ++;
+		if (((angle[1].pitch *Rad2Dree) < 100) && ((angle[2].yaw *Rad2Dree) < 300))	flag ++;
 /**************************************************************************************************
 *											Main Processing
 **************************************************************************************************/
-	
-		Get_Accel(RawAccel, 0);Get_Accel(RawAccel1, 1);
-		Get_Gyro(RawGyro, 0);Get_Gyro(RawGyro1, 1);
+		//Create memory
+		
+		//Get_Accel(RawAccel, 0);Get_Accel(RawAccel1, 1);
+		//Get_Gyro(RawGyro, 0);Get_Gyro(RawGyro1, 1);
+		//MPU6050_GetRawAccelGyro(AccelGyro);
 		U_Print_Char(USART1, "ACCEL & GYRO\n");
-		for (int i = 0; i < 3; i++)
-			{
-				fRawAccel[i] = RawAccel[i] * alpha + (fRawAccel[i] * (1.0 - alpha));
-				fRawAccel1[i] = RawAccel1[i] * alpha + (fRawAccel1[i] * (1.0 - alpha));
-				U_Print_float(USART1, fRawAccel[i]);
-				U_Print_Char(USART1, "   ");
-				U_Print_float(USART1, fRawAccel1[i]);
-				U_Print_Char(USART1, "\n");
-			}
-		for (int i = 0; i < 3; i++)
-		{
-			fRawGyro[i] = RawGyro[i] * alpha + (fRawGyro[i] * (1.0 - alpha));
-			fRawGyro1[i] = RawGyro1[i] * alpha + (fRawGyro1[i] * (1.0 - alpha));
-			U_Print_float(USART1, fRawGyro[i]);
-			U_Print_Char(USART1, "   ");
-			U_Print_float(USART1, fRawGyro1[i]);
-			U_Print_Char(USART1, "\n");
-		}
+		LowPass_Accel(fAcc);
+		LowPass_Gyro(fGyro);
+	
 		U_Print_Char(USART1, "MAG\n");
-		
-		//AK8963_turn_off(1);
-		//AK8963_turn_off(0);
-		
-		AK8963_turn_on(0);
-		Initialize_AK8963();
-		Get_Mag(Mag);
-		AK8963_turn_off(0);
-		
-		AK8963_turn_on(1);
-		Initialize_AK8963();
-		Get_Mag(Mag1);
-		AK8963_turn_off(1);
-		
-		for (int i =0 ; i < 3; i++)
-			{
-				fMag[i] = Mag[i] * alpha + (fMag[i] * (1.0 - alpha));
-				fMag1[i] = Mag1[i] * alpha + (fMag1[i] * (1.0 - alpha));
-				U_Print_float(USART1, fMag[i]);
-				U_Print_Char(USART1, "   ");
-				U_Print_float(USART1, fMag1[i]);
-				U_Print_Char(USART1, "\n");
-			}
-		double R = sqrt(float((RawAccel[0] * RawAccel[0] + RawAccel[1] * RawAccel[1] + RawAccel[2] * RawAccel[2] )));
-		double R1 = sqrt(float((RawAccel1[0] * RawAccel1[0] + RawAccel1[1] * RawAccel1[1] + RawAccel1[2] * RawAccel1[2] )));
+		LowPass_Mag(fMag);
+			
+			
+		float R = sqrt(float((fAcc[0].x * fAcc[0].x + fAcc[0].y * fAcc[0].y + fAcc[0].z * fAcc[0].z )));
+		float R1 = sqrt(float((fAcc[1].x * fAcc[1].x + fAcc[1].y * fAcc[1].y + fAcc[1].z * fAcc[1].z )));
+		float R2 = sqrt(float((fAcc[2].x * fAcc[2].x + fAcc[2].y * fAcc[2].y + fAcc[2].z * fAcc[2].z )));
 		//U_Print_float(USART1, R);
 		//U_Print_Char(USART1, "\n");
 //		U_Print_float(USART1, acos(Mag[1]/Distance(Mag[0],Mag[1])));
@@ -296,39 +265,53 @@ int main()
 //		U_Print_float(USART1, Mag[1]/Distance(Mag[0],Mag[1]));
 //		U_Print_Char(USART1, "\n");
 		
-		for (int i = 0; i < 3; i++)
-		{
-			if (RawAccel[i] > 32768) 
-			{
-				RawAccel[i] -= 65536;
-				//reverse = -1;
-			}
-			if (RawGyro[i] > 32768) 
-			{
-				RawGyro[i] -= 65536;
-				//reverse = -1;
-			}
-			if (Mag[i] > 32768)
-			{
-				Mag[i] -= 98304;
-			}
-			if (RawAccel1[i] > 32768) 
-			{
-				RawAccel1[i] -= 65536;
-				//reverse = -1;
-			}
-			if (RawGyro1[i] > 32768) 
-			{
-				RawGyro1[i] -= 65536;
-				//reverse = -1;
-			}
-			if (Mag1[i] > 32768)
-			{
-				Mag1[i] -= 98304;
-			}
-		}
-		float heading = atan2(Mag[1], Mag[0]);
-		float heading1 = atan2(Mag1[1], Mag1[0]);
+//		for (char i = 0; i < 3; i++)
+//		{
+//			if (fAcc[i].x > 32768) 
+//			{
+//				fAcc[i].x -= 65536;
+//				//reverse = -1;
+//			}
+//			if (fAcc[i].y > 32768) 
+//			{
+//				fAcc[i].y -= 65536;
+//				//reverse = -1;
+//			}
+//			if (fAcc[i].z > 32768) 
+//			{
+//				fAcc[i].z -= 65536;
+//				//reverse = -1;
+//			}
+//			if (fGyro[i].x > 32768) 
+//			{
+//				fGyro[i].x -= 65536;
+//				//reverse = -1;
+//			}
+//			if (fGyro[i].y > 32768) 
+//			{
+//				fGyro[i].y -= 65536;
+//				//reverse = -1;
+//			}
+//			if (fGyro[i].z > 32768) 
+//			{
+//				fGyro[i].z -= 65536;
+//				//reverse = -1;
+//			}
+//		}
+		if (fMag[0].x > 32768)				fMag[1].x -= 98304;
+			
+		if (fMag[0].y > 32768)				fMag[1].y -= 98304;
+			
+		if (fMag[0].z > 32768)				fMag[1].z -= 98304;
+		
+		if (fMag[1].x > 32768)				fMag[1].x -= 98304;
+			
+		if (fMag[1].y > 32768)				fMag[1].y -= 98304;
+			
+		if (fMag[1].z > 32768)				fMag[1].z -= 98304;
+			
+		float heading = atan2(fMag[0].y, fMag[0].x);
+		float heading1 = atan2(fMag[1].y, fMag[1].z);
 		heading += declinationAngle;
 		heading1 += declinationAngle;
 		if (heading < 0) heading += 2*PI;
@@ -340,21 +323,24 @@ int main()
 		//U_Print_float(USART1, heading1 * Rad2Dree);
 		//U_Print_Char(USART1, "\n");
 		
-		float pitch = acos((RawAccel[0]/R));
-		pitch += declinationAngle;
-		if (pitch < 0) pitch += 2*PI;
-		if (pitch > 2*PI) pitch -= 2*PI;
 		
 		/************************** Put in Kalman **************************/	
-		kalman_predict(&filter_pitch, RawGyro[0],  ( time_now - time_pre));
-    kalman_update(&filter_pitch, acos((RawAccel[0]/R)));
-    kalman_predict(&filter_roll, RawGyro[1],  (time_now - time_pre));
-    kalman_update(&filter_roll, acos(RawAccel[1]/R));
+		//kalman_predict(&filter_pitch, RawGyro[0],  ( time_now - time_pre));
+    //kalman_update(&filter_pitch, acos((RawAccel[0]/R)));
+		kalman_predict(&filter_pitch, fGyro[0].x,  ( time_now - time_pre));
+    kalman_update(&filter_pitch, (fAcc[0].x/R));
+    kalman_predict(&filter_roll, fGyro[0].y,  (time_now - time_pre));
+    kalman_update(&filter_roll, acos(fAcc[0].y/R));
 		
-		kalman_predict(&filter_pitch1, RawGyro1[0],  ( time_now - time_pre));
-    kalman_update(&filter_pitch1, acos((RawAccel1[0]/R)));
-    kalman_predict(&filter_roll1, RawGyro1[1],  (time_now - time_pre));
-    kalman_update(&filter_roll1, acos(RawAccel1[1]/R));
+		kalman_predict(&filter_pitch1, fGyro[1].x,  ( time_now - time_pre));
+    kalman_update(&filter_pitch1, (fAcc[1].x/R));
+    kalman_predict(&filter_roll1, fGyro[1].y,  (time_now - time_pre));
+    kalman_update(&filter_roll1, acos(fAcc[1].y/R1));
+		
+		kalman_predict(&filter_pitch1, fGyro[2].x,  ( time_now - time_pre));
+    kalman_update(&filter_pitch2, acos((fAcc[2].x/R2)));
+    kalman_predict(&filter_roll2, fGyro[2].y,  (time_now - time_pre));
+    kalman_update(&filter_roll2, acos(fAcc[2].y/R2));
 		
 //		/************************** Put in Kalman **************************/	
 //		kalman_predict(&filter_pitch, RawGyro[0],  ( time_now - time_pre));
@@ -363,111 +349,120 @@ int main()
 //    kalman_update(&filter_roll, float(atan2(RawAccel[1],RawAccel[2])));
 		
 		/************************** Get Pitch, Roll, Yaw ***********************/
-		angle[0] = kalman_get_angle(&filter_pitch);
-		angle[1] = kalman_get_angle(&filter_roll);
-		angle1[0] = kalman_get_angle(&filter_pitch);
-		angle1[1] = kalman_get_angle(&filter_roll);
+		angle[0].pitch = kalman_get_angle(&filter_pitch);
+		angle[0].roll = kalman_get_angle(&filter_roll);
+		angle[1].pitch = kalman_get_angle(&filter_pitch1);
+		angle[1].roll = kalman_get_angle(&filter_roll1);
+		angle[2].pitch = kalman_get_angle(&filter_pitch2);
+		angle[2].roll = kalman_get_angle(&filter_roll2);
 		
 		
-		kalman_predict(&filter_yaw, RawGyro[2],  (time_now - time_pre));
+		kalman_predict(&filter_yaw, fGyro[0].z,  (time_now - time_pre));
     kalman_update(&filter_yaw, heading);
-		kalman_predict(&filter_yaw1, RawGyro1[2],  (time_now - time_pre));
+		kalman_predict(&filter_yaw1, fGyro[1].z,  (time_now - time_pre));
     kalman_update(&filter_yaw1, heading1);
-		//kalman_predict(&filter_yaw, (float)acos(Mag[1]/Distance(Mag[0],Mag[1])),  (time_now - time_pre));
-    //kalman_update(&filter_yaw, (float)acos(Mag[1]/Distance(Mag[0],Mag[1])));
+		kalman_predict(&filter_yaw, (float)acos(fMag[0].y/Distance(fMag[0].x,fMag[0].y)),  (time_now - time_pre));
+    kalman_update(&filter_yaw, (float)acos(fMag[0].y/Distance(fMag[1].x,fMag[1].y)));
 		time_pre = time_now; // get current time
 		
-		angle[2] = kalman_get_angle(&filter_yaw);
-		angle1[2] = kalman_get_angle(&filter_yaw1);
+		if (time_pre == 0xffffffffffffffff)
+			time_pre = time_now = 0;
+		
+		angle[0].yaw = kalman_get_angle(&filter_yaw);
+		angle[1].yaw = kalman_get_angle(&filter_yaw1);
 		
 		//if (flag == 1)
-		{
+//		{
 			U_Print_Char(USART1, "Pitch ");
-			U_Print_float(USART1, angle[1] * Rad2Dree);
+			U_Print_float(USART1, angle[0].roll * Rad2Dree);// pitch mpu 1
 			U_Print_Char(USART1, "  ");
-			U_Print_float(USART1, angle1[2] * Rad2Dree);
+			U_Print_float(USART1, angle[1].yaw * Rad2Dree);// yaw mpu 2
+			U_Print_Char(USART1, "  ");
+			U_Print_float(USART1, angle[2].pitch * Rad2Dree);// roll mpu 3
 			U_Print_Char(USART1, " \n");
 			U_Print_Char(USART1, "Roll ");
-			U_Print_float(USART1, angle[0] * Rad2Dree);
+			U_Print_float(USART1, angle[0].pitch * Rad2Dree);
 			U_Print_Char(USART1, "  ");
-			U_Print_float(USART1, angle1[0] * Rad2Dree);
+			U_Print_float(USART1, angle[1].pitch * Rad2Dree);//
 			U_Print_Char(USART1, " \n");
 			U_Print_Char(USART1, "Yaw ");
-			U_Print_float(USART1, angle[2] * Rad2Dree);
+			U_Print_float(USART1, angle[0].yaw * Rad2Dree);// yaw mpu 1
 			U_Print_Char(USART1, "  ");
-			U_Print_float(USART1, angle1[1] * Rad2Dree);
+			U_Print_float(USART1, angle[1].roll * Rad2Dree);// pitch mpu 2
+			U_Print_Char(USART1, "  ");
+			U_Print_float(USART1, angle[2].roll * Rad2Dree);// pitch mpu 3
 			U_Print_Char(USART1, " \n");
-		}
+//		}
 		//else U_Print_Char(USART1, "not \n");
 		timer = 0;
-		while (timer < 250);
+		while (timer < 150);
 		led_toggle();
 	}
 }
 
 
-static void prvSetupHardware( void )
-{
-	/* Start with the clocks in their expected state. */
-	RCC_DeInit();
+//static void prvSetupHardware( void )
+//{
+//	/* Start with the clocks in their expected state. */
+//	RCC_DeInit();
 
-	/* Enable HSE (high speed external clock). */
-	RCC_HSEConfig( RCC_HSE_ON );
+//	/* Enable HSE (high speed external clock). */
+//	RCC_HSEConfig( RCC_HSE_ON );
 
-	/* Wait till HSE is ready. */
-	while( RCC_GetFlagStatus( RCC_FLAG_HSERDY ) == RESET )
-	{
-	}
+//	/* Wait till HSE is ready. */
+//	while( RCC_GetFlagStatus( RCC_FLAG_HSERDY ) == RESET )
+//	{
+//	}
 
-	/* 2 wait states required on the flash. */
-	*( ( unsigned long * ) 0x40022000 ) = 0x02;
+//	/* 2 wait states required on the flash. */
+//	*( ( unsigned long * ) 0x40022000 ) = 0x02;
 
-	/* HCLK = SYSCLK */
-	RCC_HCLKConfig( RCC_SYSCLK_Div1 );
+//	/* HCLK = SYSCLK */
+//	RCC_HCLKConfig( RCC_SYSCLK_Div1 );
 
-	/* PCLK2 = HCLK */
-	RCC_PCLK2Config( RCC_HCLK_Div1 );
+//	/* PCLK2 = HCLK */
+//	RCC_PCLK2Config( RCC_HCLK_Div1 );
 
-	/* PCLK1 = HCLK/2 */
-	RCC_PCLK1Config( RCC_HCLK_Div2 );
+//	/* PCLK1 = HCLK/2 */
+//	RCC_PCLK1Config( RCC_HCLK_Div2 );
 
-	/* PLLCLK = 8MHz * 9 = 72 MHz. */
-	RCC_PLLConfig( RCC_PLLSource_HSE_Div1, RCC_PLLMul_9 );
+//	/* PLLCLK = 8MHz * 9 = 72 MHz. */
+//	RCC_PLLConfig( RCC_PLLSource_HSE_Div1, RCC_PLLMul_9 );
 
-	/* Enable PLL. */
-	RCC_PLLCmd( ENABLE );
+//	/* Enable PLL. */
+//	RCC_PLLCmd( ENABLE );
 
-	/* Wait till PLL is ready. */
-	while(RCC_GetFlagStatus(RCC_FLAG_PLLRDY) == RESET)
-	{
-	}
+//	/* Wait till PLL is ready. */
+//	while(RCC_GetFlagStatus(RCC_FLAG_PLLRDY) == RESET)
+//	{
+//	}
 
-	/* Select PLL as system clock source. */
-	RCC_SYSCLKConfig( RCC_SYSCLKSource_PLLCLK );
+//	/* Select PLL as system clock source. */
+//	RCC_SYSCLKConfig( RCC_SYSCLKSource_PLLCLK );
 
-	/* Wait till PLL is used as system clock source. */
-	while( RCC_GetSYSCLKSource() != 0x08 )
-	{
-	}
+//	/* Wait till PLL is used as system clock source. */
+//	while( RCC_GetSYSCLKSource() != 0x08 )
+//	{
+//	}
 
-	/* Enable GPIOA, GPIOB, GPIOC, GPIOD, GPIOE and AFIO clocks */
-	RCC_APB2PeriphClockCmd(	RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB |RCC_APB2Periph_GPIOC
-							| RCC_APB2Periph_GPIOD | RCC_APB2Periph_GPIOE | RCC_APB2Periph_AFIO, ENABLE );
+//	/* Enable GPIOA, GPIOB, GPIOC, GPIOD, GPIOE and AFIO clocks */
+//	RCC_APB2PeriphClockCmd(	RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB |RCC_APB2Periph_GPIOC
+//							| RCC_APB2Periph_GPIOD | RCC_APB2Periph_GPIOE | RCC_APB2Periph_AFIO, ENABLE );
 
-	/* SPI2 Periph clock enable */
-	RCC_APB1PeriphClockCmd( RCC_APB1Periph_SPI2, ENABLE );
+//	/* SPI2 Periph clock enable */
+//	RCC_APB1PeriphClockCmd( RCC_APB1Periph_SPI2, ENABLE );
 
 
-	/* Set the Vector Table base address at 0x08000000 */
-	NVIC_SetVectorTable( NVIC_VectTab_FLASH, 0x0 );
+//	/* Set the Vector Table base address at 0x08000000 */
+//	NVIC_SetVectorTable( NVIC_VectTab_FLASH, 0x0 );
 
-	NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4 );
+//	NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4 );
 
-	/* Configure HCLK clock as SysTick clock source. */
-	SysTick_CLKSourceConfig( SysTick_CLKSource_HCLK );
+//	/* Configure HCLK clock as SysTick clock source. */
+//	SysTick_CLKSourceConfig( SysTick_CLKSource_HCLK );
 
-	//vParTestInitialise();
-}
+//	//vParTestInitialise();
+//}
 
 void sleep(long i)
 {
@@ -506,62 +501,186 @@ float Distance(float x, float y)
 	return sqrt(x*x + y*y);
 }
 
-int Get_Central(kalman p, kalman r, kalman y)
+//int Get_Central(kalman p, kalman r, kalman y)
+//{
+//	float *RawAccel = new float[3],
+//				*RawGyro = new float[3],
+//				*Mag = new float[3],
+//				angle[3];
+//	Get_Accel(RawAccel,0);
+//	Get_Gyro(RawGyro,0);
+//	Get_Mag(Mag);
+//	double R = sqrt(float((RawAccel[0] * RawAccel[0] + RawAccel[1] * RawAccel[1] + RawAccel[2] * RawAccel[2] )));
+//	if ((Mag[0] > 32768) && ( Mag[1] < 32768))
+//		{
+//			Mag[0] -= 98304; // 65536 + 32768
+//			U_Print_float(USART1, Mag[0]);
+//			U_Print_Char(USART1, "\n");
+//		}
+//		if ((Mag[0] > 32768) && ( Mag[1] > 32768))
+//		{
+//			Mag[0] -= 98304; // 65536 + 32768
+//			Mag[1] -= 98304;
+//			U_Print_float(USART1, Mag[0]);
+//			U_Print_Char(USART1, "\n");
+//		}
+//		float heading = atan2(Mag[1], Mag[0]);
+//		heading += declinationAngle;
+//		if (heading < 0) heading += 2*PI;
+//		if (heading > 2*PI) heading -= 2*PI;
+//		kalman_predict(&p, RawGyro[0],  ( time_now - time_pre));
+//    kalman_update(&p, acos((RawAccel[1]/R)));
+//    kalman_predict(&r, RawGyro[1],  (time_now - time_pre));
+//    kalman_update(&r, acos(RawAccel[1]/R));
+//		angle[0] = kalman_get_angle(&p);
+//		angle[1] = kalman_get_angle(&r);
+//		
+//		
+//		kalman_predict(&y, RawGyro[2],  (time_now - time_pre));
+//    kalman_update(&y, heading);
+//		time_pre = time_now; // get current time
+//		
+//		angle[2] = kalman_get_angle(&y);
+//		
+//		U_Print_Char(USART1, "Pitch ");
+//		U_Print_float(USART1, angle[1] * Rad2Dree);
+//		U_Print_Char(USART1, " \n");
+//		U_Print_Char(USART1, "Roll ");
+//		U_Print_float(USART1, angle[0] * Rad2Dree);
+//		U_Print_Char(USART1, " \n");
+//		U_Print_Char(USART1, "Yaw ");
+//		U_Print_float(USART1, angle[2] * Rad2Dree);
+//		U_Print_Char(USART1, " \n");
+//		
+//		
+//		if (((angle[2] * Rad2Dree) < 300) && ((angle[1] *Rad2Dree) <= 90))
+//			return 1;
+//		else return 0;
+//		delete RawAccel;
+//		delete RawGyro;
+//		delete Mag;
+//}
+
+void LowPass_Accel(Accel fAcc[])
 {
-	float *RawAccel = new float[3],
-				*RawGyro = new float[3],
-				*Mag = new float[3],
-				angle[3];
-	Get_Accel(RawAccel,0);
-	Get_Gyro(RawGyro,0);
-	Get_Mag(Mag);
-	double R = sqrt(float((RawAccel[0] * RawAccel[0] + RawAccel[1] * RawAccel[1] + RawAccel[2] * RawAccel[2] )));
-	if ((Mag[0] > 32768) && ( Mag[1] < 32768))
-		{
-			Mag[0] -= 98304; // 65536 + 32768
-			U_Print_float(USART1, Mag[0]);
-			U_Print_Char(USART1, "\n");
-		}
-		if ((Mag[0] > 32768) && ( Mag[1] > 32768))
-		{
-			Mag[0] -= 98304; // 65536 + 32768
-			Mag[1] -= 98304;
-			U_Print_float(USART1, Mag[0]);
-			U_Print_Char(USART1, "\n");
-		}
-		float heading = atan2(Mag[1], Mag[0]);
-		heading += declinationAngle;
-		if (heading < 0) heading += 2*PI;
-		if (heading > 2*PI) heading -= 2*PI;
-		kalman_predict(&p, RawGyro[0],  ( time_now - time_pre));
-    kalman_update(&p, acos((RawAccel[1]/R)));
-    kalman_predict(&r, RawGyro[1],  (time_now - time_pre));
-    kalman_update(&r, acos(RawAccel[1]/R));
-		angle[0] = kalman_get_angle(&p);
-		angle[1] = kalman_get_angle(&r);
+	float RawAccel[6];
+		Get_Accel(RawAccel, 0);
+		fAcc[0].x = RawAccel[0] * alpha + (fAcc[0].x * (1.0 - alpha));
+		fAcc[0].y = RawAccel[1] * alpha + (fAcc[0].y * (1.0 - alpha));
+		fAcc[0].z = RawAccel[2] * alpha + (fAcc[0].z * (1.0 - alpha));
 		
+		Get_Accel(RawAccel, 1);
+		fAcc[1].x = RawAccel[0] * alpha + (fAcc[0].x * (1.0 - alpha));
+		fAcc[1].y = RawAccel[1] * alpha + (fAcc[0].y * (1.0 - alpha));
+		fAcc[1].z = RawAccel[2] * alpha + (fAcc[0].z * (1.0 - alpha));
 		
-		kalman_predict(&y, RawGyro[2],  (time_now - time_pre));
-    kalman_update(&y, heading);
-		time_pre = time_now; // get current time
+		MPU6050_GetRawAccelGyro(RawAccel);
+		fAcc[2].x = RawAccel[0] * alpha + (fAcc[0].x * (1.0 - alpha));
+		fAcc[2].y = RawAccel[1] * alpha + (fAcc[0].y * (1.0 - alpha));
+		fAcc[2].z = RawAccel[2] * alpha + (fAcc[0].z * (1.0 - alpha));
 		
-		angle[2] = kalman_get_angle(&y);
+//		U_Print_Char(USART1, "Accel MPU 0: ");
+//		U_Print_float(USART1, fAcc[0].x);
+//		U_Print_Char(USART1, "  ");
+//		U_Print_float(USART1, fAcc[0].y);
+//		U_Print_Char(USART1, "  ");
+//		U_Print_float(USART1, fAcc[0].z);
+//		U_Print_Char(USART1, "\n");
+//		
+//		U_Print_Char(USART1, "Accel MPU 1: ");
+//		U_Print_float(USART1, fAcc[1].x);
+//		U_Print_Char(USART1, "  ");
+//		U_Print_float(USART1, fAcc[1].y);
+//		U_Print_Char(USART1, "  ");
+//		U_Print_float(USART1, fAcc[1].z);
+//		U_Print_Char(USART1, "\n");
+//		
+//		U_Print_Char(USART1, "Accel MPU 2: ");
+//		U_Print_float(USART1, fAcc[2].x);
+//		U_Print_Char(USART1, "  ");
+//		U_Print_float(USART1, fAcc[2].y);
+//		U_Print_Char(USART1, "  ");
+//		U_Print_float(USART1, fAcc[2].z);
+//		U_Print_Char(USART1, "\n");
+}
+
+void LowPass_Gyro(Gyro fGyro[])
+{
+	float Raw[6];
+		Get_Gyro(Raw, 0);
+		fGyro[0].x = Raw[0] * alpha + (fGyro[0].x * (1.0 - alpha));
+		fGyro[0].y = Raw[1] * alpha + (fGyro[0].y * (1.0 - alpha));
+		fGyro[0].z = Raw[2] * alpha + (fGyro[0].z * (1.0 - alpha));
 		
-		U_Print_Char(USART1, "Pitch ");
-		U_Print_float(USART1, angle[1] * Rad2Dree);
-		U_Print_Char(USART1, " \n");
-		U_Print_Char(USART1, "Roll ");
-		U_Print_float(USART1, angle[0] * Rad2Dree);
-		U_Print_Char(USART1, " \n");
-		U_Print_Char(USART1, "Yaw ");
-		U_Print_float(USART1, angle[2] * Rad2Dree);
-		U_Print_Char(USART1, " \n");
+		Get_Gyro(Raw, 1);
+		fGyro[1].x = Raw[0] * alpha + (fGyro[0].x * (1.0 - alpha));
+		fGyro[1].y = Raw[1] * alpha + (fGyro[0].y * (1.0 - alpha));
+		fGyro[1].z = Raw[2] * alpha + (fGyro[0].z * (1.0 - alpha));
 		
+		MPU6050_GetRawAccelGyro(Raw);
+		fGyro[2].x = Raw[3] * alpha + (fGyro[0].x * (1.0 - alpha));
+		fGyro[2].y = Raw[4] * alpha + (fGyro[0].y * (1.0 - alpha));
+		fGyro[2].z = Raw[5] * alpha + (fGyro[0].z * (1.0 - alpha));
 		
-		if (((angle[2] * Rad2Dree) < 300) && ((angle[1] *Rad2Dree) <= 90))
-			return 1;
-		else return 0;
-		delete RawAccel;
-		delete RawGyro;
-		delete Mag;
+//		U_Print_Char(USART1, "Gyro MPU 0: ");
+//		U_Print_float(USART1, fGyro[0].x);
+//		U_Print_Char(USART1, "  ");
+//		U_Print_float(USART1, fGyro[0].y);
+//		U_Print_Char(USART1, "  ");
+//		U_Print_float(USART1, fGyro[0].z);
+//		U_Print_Char(USART1, "\n");
+//		
+//		U_Print_Char(USART1, "Gyro MPU 1: ");
+//		U_Print_float(USART1, fGyro[1].x);
+//		U_Print_Char(USART1, "  ");
+//		U_Print_float(USART1, fGyro[1].y);
+//		U_Print_Char(USART1, "  ");
+//		U_Print_float(USART1, fGyro[1].z);
+//		U_Print_Char(USART1, "\n");
+//		
+//		U_Print_Char(USART1, "Gyro MPU 2: ");
+//		U_Print_float(USART1, fGyro[2].x);
+//		U_Print_Char(USART1, "  ");
+//		U_Print_float(USART1, fGyro[2].y);
+//		U_Print_Char(USART1, "  ");
+//		U_Print_float(USART1, fGyro[2].z);
+//		U_Print_Char(USART1, "\n");
+}
+
+void LowPass_Mag(Mag fMag[])
+{
+	float Raw[3];
+		AK8963_turn_on(0);
+		Initialize_AK8963();
+		Get_Mag(Raw);
+		AK8963_turn_off(0);
+	
+		fMag[0].x = Raw[0] * alpha + (fMag[0].x * (1.0 - alpha));
+		fMag[0].y = Raw[1] * alpha + (fMag[0].y * (1.0 - alpha));
+		fMag[0].z = Raw[2] * alpha + (fMag[0].z * (1.0 - alpha));
+	
+		U_Print_Char(USART1, "Mag MPU 0: ");
+		U_Print_float(USART1, fMag[0].x);
+		U_Print_Char(USART1, "  ");
+		U_Print_float(USART1, fMag[0].y);
+		U_Print_Char(USART1, "  ");
+		U_Print_float(USART1, fMag[0].z);
+		U_Print_Char(USART1, "\n");
+		
+		AK8963_turn_on(1);
+		Initialize_AK8963();
+		Get_Mag(Raw);
+		AK8963_turn_off(1);
+		
+		fMag[1].x = Raw[0] * alpha + (fMag[1].x * (1.0 - alpha));
+		fMag[1].y = Raw[1] * alpha + (fMag[1].y * (1.0 - alpha));
+		fMag[1].z = Raw[2] * alpha + (fMag[1].z * (1.0 - alpha));
+	
+		U_Print_Char(USART1, "Mag MPU 1: ");
+		U_Print_float(USART1, fMag[1].x);
+		U_Print_Char(USART1, "  ");
+		U_Print_float(USART1, fMag[1].y);
+		U_Print_Char(USART1, "  ");
+		U_Print_float(USART1, fMag[1].z);
+		U_Print_Char(USART1, "\n");
 }

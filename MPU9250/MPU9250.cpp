@@ -3,8 +3,9 @@
 /******************************************************************
 *											Default Range
 ******************************************************************/
-int currentGyroRange = 3,
-	 currentAcceleroRange = 3;
+char currentGyroRange = 3,
+	  currentAcceleroRange = 3,
+		mscale = 0;
 
 void MPU9250_I2C_Init(int ADO_bit)
 {
@@ -174,7 +175,8 @@ void Initialize_AK8963()
 {
 	Write_Bytes(AK8963_CNTL, AK8963_ADDRESS_DEFAULT, 0x00);
 	delay(10000);
-	Write_Bytes(AK8963_CNTL, AK8963_ADDRESS_DEFAULT, 0x16);
+	//Write_Bytes(AK8963_CNTL, AK8963_ADDRESS_DEFAULT, 0x16);
+	Write_Bytes(AK8963_CNTL, AK8963_ADDRESS_DEFAULT, (1 << 1) | (1 << 2) | (0x02));
 	delay(10000);
 }
 /***********************************************************************************
@@ -231,9 +233,19 @@ void Get_Mag(float *Mag)
 			Mag[1] = float(data[2] + (data[3] << 8));
 			Mag[2] = float(data[4] + (data[5] << 8));
 		}
-		Mag[0] *= 10.*4912./32760.0;
-		Mag[1] *= 10.*4912./32760.0;
-		Mag[2] *= 10.*4912./32760.0;
+		switch (mscale)
+		{
+			case MFS_14BITS:
+				Mag[0] *= 10.*4912./8190.;
+				Mag[1] *= 10.*4912./8190.;
+				Mag[2] *= 10.*4912./8190.;
+			break;
+			case MFS_16BITS:
+				Mag[0] *= 10.*4912./32760.0;
+				Mag[1] *= 10.*4912./32760.0;
+				Mag[2] *= 10.*4912./32760.0;
+			break;
+		}
 	}
 	delete data;
 }
@@ -277,51 +289,51 @@ void Raw_Accel_Gyro(float AccelGyro[])
 			AccelGyro[4] = (data[10] << 8) + data[11]; // Gyro_X
 			AccelGyro[5] = (data[12] << 8) + data[13]; // Gyro_X
 	/**************************************/
-//	/*---------ACCELERO--------*/
-//		if (currentAcceleroRange == MPU9250_ACCELERO_RANGE_2G) {
-//        AccelGyro[0]=(float) AccelGyro[0] / 16384.0 * 9.81;
-//        AccelGyro[1]=(float) AccelGyro[1] / 16384.0 * 9.81;
-//        AccelGyro[2]=(float) AccelGyro[2] / 16384.0 * 9.81;
-//        }
-//    if (currentAcceleroRange == MPU9250_ACCELERO_RANGE_4G){
-//        AccelGyro[0]=(float) AccelGyro[0] / 8192.0 * 9.81;
-//        AccelGyro[1]=(float) AccelGyro[1] / 8192.0 * 9.81;
-//        AccelGyro[2]=(float) AccelGyro[2] / 8192.0 * 9.81;
-//        }
-//    if (currentAcceleroRange == MPU9250_ACCELERO_RANGE_8G){
-//        AccelGyro[0]=(float) AccelGyro[0] / 4096.0 * 9.81;
-//        AccelGyro[1]=(float) AccelGyro[1] / 4096.0 * 9.81;
-//        AccelGyro[2]=(float) AccelGyro[2] / 4096.0 * 9.81;
-//        }
-//    if (currentAcceleroRange == MPU9250_ACCELERO_RANGE_16G){
-//        AccelGyro[0]=(float) AccelGyro[0] / 2048.0 * 9.81;
-//        AccelGyro[1]=(float) AccelGyro[1] / 2048.0 * 9.81;
-//        AccelGyro[2]=(float) AccelGyro[2] / 2048.0 * 9.81;
-//        }
-//				AccelGyro[0]*=2;
-//        AccelGyro[1]*=2;   
-//        AccelGyro[2]*=2;
-//		/*-----------GYRO------------*/
-//		if (currentGyroRange == MPU9250_GYRO_RANGE_250) {
-//        AccelGyro[3]=(float)AccelGyro[3] / 7505.7;
-//        AccelGyro[4]=(float)AccelGyro[4] / 7505.7;
-//        AccelGyro[5]=(float)AccelGyro[5] / 7505.7;
-//        }
-//    if (currentGyroRange == MPU9250_GYRO_RANGE_500){
-//        AccelGyro[3]=(float)AccelGyro[3] / 3752.9;
-//        AccelGyro[4]=(float)AccelGyro[4] / 3752.9;
-//        AccelGyro[5]=(float)AccelGyro[5] / 3752.9;
-//        }
-//    if (currentGyroRange == MPU9250_GYRO_RANGE_1000){
-//        AccelGyro[3]=(float)AccelGyro[3] / 1879.3;;
-//        AccelGyro[4]=(float)AccelGyro[4] / 1879.3;
-//        AccelGyro[5]=(float)AccelGyro[5] / 1879.3;
-//        }
-//    if (currentGyroRange == MPU9250_GYRO_RANGE_2000){
-//        AccelGyro[3]=(float)AccelGyro[3] / 939.7;
-//        AccelGyro[4]=(float)AccelGyro[4] / 939.7;
-//        AccelGyro[5]=(float)AccelGyro[5] / 939.7;
-//        }
+	/*---------ACCELERO--------*/
+		if (currentAcceleroRange == MPU9250_ACCELERO_RANGE_2G) {
+        AccelGyro[0]=(float) AccelGyro[0] / 16384.0 * 9.81;
+        AccelGyro[1]=(float) AccelGyro[1] / 16384.0 * 9.81;
+        AccelGyro[2]=(float) AccelGyro[2] / 16384.0 * 9.81;
+        }
+    if (currentAcceleroRange == MPU9250_ACCELERO_RANGE_4G){
+        AccelGyro[0]=(float) AccelGyro[0] / 8192.0 * 9.81;
+        AccelGyro[1]=(float) AccelGyro[1] / 8192.0 * 9.81;
+        AccelGyro[2]=(float) AccelGyro[2] / 8192.0 * 9.81;
+        }
+    if (currentAcceleroRange == MPU9250_ACCELERO_RANGE_8G){
+        AccelGyro[0]=(float) AccelGyro[0] / 4096.0 * 9.81;
+        AccelGyro[1]=(float) AccelGyro[1] / 4096.0 * 9.81;
+        AccelGyro[2]=(float) AccelGyro[2] / 4096.0 * 9.81;
+        }
+    if (currentAcceleroRange == MPU9250_ACCELERO_RANGE_16G){
+        AccelGyro[0]=(float) AccelGyro[0] / 2048.0 * 9.81;
+        AccelGyro[1]=(float) AccelGyro[1] / 2048.0 * 9.81;
+        AccelGyro[2]=(float) AccelGyro[2] / 2048.0 * 9.81;
+        }
+				AccelGyro[0]*=2;
+        AccelGyro[1]*=2;   
+        AccelGyro[2]*=2;
+		/*-----------GYRO------------*/
+		if (currentGyroRange == MPU9250_GYRO_RANGE_250) {
+        AccelGyro[3]=(float)AccelGyro[3] / 7505.7;
+        AccelGyro[4]=(float)AccelGyro[4] / 7505.7;
+        AccelGyro[5]=(float)AccelGyro[5] / 7505.7;
+        }
+    if (currentGyroRange == MPU9250_GYRO_RANGE_500){
+        AccelGyro[3]=(float)AccelGyro[3] / 3752.9;
+        AccelGyro[4]=(float)AccelGyro[4] / 3752.9;
+        AccelGyro[5]=(float)AccelGyro[5] / 3752.9;
+        }
+    if (currentGyroRange == MPU9250_GYRO_RANGE_1000){
+        AccelGyro[3]=(float)AccelGyro[3] / 1879.3;;
+        AccelGyro[4]=(float)AccelGyro[4] / 1879.3;
+        AccelGyro[5]=(float)AccelGyro[5] / 1879.3;
+        }
+    if (currentGyroRange == MPU9250_GYRO_RANGE_2000){
+        AccelGyro[3]=(float)AccelGyro[3] / 939.7;
+        AccelGyro[4]=(float)AccelGyro[4] / 939.7;
+        AccelGyro[5]=(float)AccelGyro[5] / 939.7;
+        }
 		delete data;
 }
 /***********************************************************************************
@@ -353,6 +365,29 @@ void Get_Accel(float *Accel, int ado_bit)
 	Accel[0] = (data[0] << 8) | data[1];
 	Accel[1] = (data[2] << 8) | data[3];
 	Accel[2] = (data[4] << 8) | data[5];
+	
+	/*---------ACCELERO--------*/
+		if (currentAcceleroRange == MPU9250_ACCELERO_RANGE_2G) {
+        Accel[0] *= 2.0/32768.0;
+        Accel[1] *= 2.0/32768.0;
+        Accel[2] *= 2.0/32768.0;
+        }
+    if (currentAcceleroRange == MPU9250_ACCELERO_RANGE_4G){
+        Accel[0] *= 4.0/32768.0;
+        Accel[1] *= 4.0/32768.0;
+        Accel[2] *= 4.0/32768.0;
+        }
+    if (currentAcceleroRange == MPU9250_ACCELERO_RANGE_8G){
+        Accel[0] *= 8.0/32768.0;
+        Accel[1] *= 8.0/32768.0;
+        Accel[2] *= 8.0/32768.0;
+        }
+    if (currentAcceleroRange == MPU9250_ACCELERO_RANGE_16G){
+        Accel[0] *= 16.0/32768.0;
+        Accel[1] *= 16.0/32768.0;
+        Accel[2] *= 16.0/32768.0;
+        }
+	
 	delete data;
 }
 /***********************************************************************************
@@ -369,6 +404,28 @@ void Get_Gyro(float *Gyro, int ado_bit)
 	Gyro[0] = (data[0] << 8) + data[1];
 	Gyro[1] = (data[2] << 8) + data[3];
 	Gyro[2] = (data[4] << 8) + data[5];
+	
+	/*-----------GYRO------------*/
+		if (currentGyroRange == MPU9250_GYRO_RANGE_250) {
+        Gyro[0] *= 250.0/32768.0;
+        Gyro[1] *= 250.0/32768.0;
+        Gyro[2] *= 250.0/32768.0;
+        }
+    if (currentGyroRange == MPU9250_GYRO_RANGE_500){
+        Gyro[0] *= 500.0/32768.0;
+        Gyro[1] *= 500.0/32768.0;
+        Gyro[2] *= 500.0/32768.0;
+        }
+    if (currentGyroRange == MPU9250_GYRO_RANGE_1000){
+        Gyro[0] *= 1000.0/32768.0;
+        Gyro[1] *= 1000.0/32768.0;
+        Gyro[2] *= 1000.0/32768.0;
+        }
+    if (currentGyroRange == MPU9250_GYRO_RANGE_2000){
+        Gyro[0] *= 2000.0/32768.0;
+        Gyro[1] *= 2000.0/32768.0;
+        Gyro[2] *= 2000.0/32768.0;
+        }
 	delete data;
 }
 /***********************************************************************************
