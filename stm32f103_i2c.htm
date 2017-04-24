@@ -3,9 +3,9 @@
 <title>Static Call Graph - [.\stm32f103_i2c.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\stm32f103_i2c.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5040049: Last Updated: Thu Apr 20 16:58:02 2017
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5040049: Last Updated: Fri Apr 21 15:16:17 2017
 <BR><P>
-<H3>Maximum Stack Usage =        824 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
+<H3>Maximum Stack Usage =        864 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
 __rt_entry_main &rArr; main &rArr; U_Print_float(USART_TypeDef*, float) &rArr; __2sprintf &rArr; _printf_char_common &rArr; __printf
 <P>
@@ -235,7 +235,7 @@ Global Symbols
 <P><STRONG><a name="[126]"></a>__rt_entry_postsh_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rtentry2.o(.ARM.Collect$$rtentry$$00000009))
 
 <P><STRONG><a name="[5a]"></a>__rt_entry_main</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rtentry2.o(.ARM.Collect$$rtentry$$0000000D))
-<BR><BR>[Stack]<UL><LI>Max Depth = 824 + Unknown Stack Size
+<BR><BR>[Stack]<UL><LI>Max Depth = 864 + Unknown Stack Size
 <LI>Call Chain = __rt_entry_main &rArr; main &rArr; U_Print_float(USART_TypeDef*, float) &rArr; __2sprintf &rArr; _printf_char_common &rArr; __printf
 </UL>
 <BR>[Calls]<UL><LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
@@ -905,8 +905,8 @@ Global Symbols
 <LI><a href="#[b1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;led_toggle()
 </UL>
 
-<P><STRONG><a name="[93]"></a>Get_Accel</STRONG> (Thumb, 74 bytes, Stack size 16 bytes, mpu9250.o(i.Get_Accel))
-<BR><BR>[Stack]<UL><LI>Max Depth = 80<LI>Call Chain = Get_Accel &rArr; operator new[] (unsigned) &rArr; operator new(unsigned) &rArr; malloc &rArr; __Heap_Full &rArr; __Heap_ProvideMemory &rArr; free
+<P><STRONG><a name="[93]"></a>Get_Accel</STRONG> (Thumb, 88 bytes, Stack size 24 bytes, mpu9250.o(i.Get_Accel))
+<BR><BR>[Stack]<UL><LI>Max Depth = 88<LI>Call Chain = Get_Accel &rArr; operator new[] (unsigned) &rArr; operator new(unsigned) &rArr; malloc &rArr; __Heap_Full &rArr; __Heap_ProvideMemory &rArr; free
 </UL>
 <BR>[Calls]<UL><LI><a href="#[94]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_i2f
 <LI><a href="#[95]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;operator delete (void*)
@@ -916,8 +916,8 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[96]"></a>Get_Gyro</STRONG> (Thumb, 74 bytes, Stack size 16 bytes, mpu9250.o(i.Get_Gyro))
-<BR><BR>[Stack]<UL><LI>Max Depth = 80<LI>Call Chain = Get_Gyro &rArr; operator new[] (unsigned) &rArr; operator new(unsigned) &rArr; malloc &rArr; __Heap_Full &rArr; __Heap_ProvideMemory &rArr; free
+<P><STRONG><a name="[96]"></a>Get_Gyro</STRONG> (Thumb, 88 bytes, Stack size 24 bytes, mpu9250.o(i.Get_Gyro))
+<BR><BR>[Stack]<UL><LI>Max Depth = 88<LI>Call Chain = Get_Gyro &rArr; operator new[] (unsigned) &rArr; operator new(unsigned) &rArr; malloc &rArr; __Heap_Full &rArr; __Heap_ProvideMemory &rArr; free
 </UL>
 <BR>[Calls]<UL><LI><a href="#[94]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_i2f
 <LI><a href="#[95]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;operator delete (void*)
@@ -1353,8 +1353,8 @@ Global Symbols
 <LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Set_Clock
 </UL>
 
-<P><STRONG><a name="[5b]"></a>main</STRONG> (Thumb, 3296 bytes, Stack size 640 bytes, main.o(i.main))
-<BR><BR>[Stack]<UL><LI>Max Depth = 824 + Unknown Stack Size
+<P><STRONG><a name="[5b]"></a>main</STRONG> (Thumb, 3844 bytes, Stack size 680 bytes, main.o(i.main))
+<BR><BR>[Stack]<UL><LI>Max Depth = 864 + Unknown Stack Size
 <LI>Call Chain = main &rArr; U_Print_float(USART_TypeDef*, float) &rArr; __2sprintf &rArr; _printf_char_common &rArr; __printf
 </UL>
 <BR>[Calls]<UL><LI><a href="#[b9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;U_Print_float(USART_TypeDef*, float)

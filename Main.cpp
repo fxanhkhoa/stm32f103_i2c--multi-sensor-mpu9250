@@ -12,6 +12,7 @@
 #define Rad2Dree       57.295779513082320876798154814105
 #define PI	3.1415926535897932384626433832795
 #define declinationAngle  0.007563
+#define alpha  0.5
 
 static void prvSetupHardware( void );
 void sleep(long i);
@@ -181,13 +182,17 @@ int main()
 		}
 		else
 			U_Print_Char(USART1, "Check Connection AK\n");
+		AK8963_turn_off(1);
 /**************************************************************************************************
 *											Variables Init
 **************************************************************************************************/
 	float angle[3],
 				*RawAccel = new float[3],
 				*RawGyro = new float[3],
-				*Mag = new float[3];
+				*Mag = new float[3],
+				*fRawAccel = new float[3],
+				*fRawGyro = new float[3],
+				*fMag = new float[3];
 				//declinationAngle = 0.0404;
 				Mag[0] = Mag[1] = Mag[2] = 0;
 				angle[0] = angle[1] = angle[2] = 900;
@@ -195,7 +200,10 @@ int main()
 	float angle1[3],
 				*RawAccel1 = new float[3],
 				*RawGyro1 = new float[3],
-				*Mag1 = new float[3];
+				*Mag1 = new float[3],
+				*fRawAccel1 = new float[3],
+				*fRawGyro1 = new float[3],
+				*fMag1 = new float[3];
 				//declinationAngle = 0.0404;
 				Mag1[0] = Mag1[1] = Mag1[2] = 0;
 				angle1[0] = angle1[1] = angle1[2] = 900;
@@ -232,31 +240,49 @@ int main()
 *											Main Processing
 **************************************************************************************************/
 	
-		Get_Accel(RawAccel);Get_Accel(RawAccel1);
-		Get_Gyro(RawGyro);Get_Gyro(RawGyro1);
+		Get_Accel(RawAccel, 0);Get_Accel(RawAccel1, 1);
+		Get_Gyro(RawGyro, 0);Get_Gyro(RawGyro1, 1);
 		U_Print_Char(USART1, "ACCEL & GYRO\n");
 		for (int i = 0; i < 3; i++)
 			{
-				U_Print_float(USART1, RawAccel[i]);
+				fRawAccel[i] = RawAccel[i] * alpha + (fRawAccel[i] * (1.0 - alpha));
+				fRawAccel1[i] = RawAccel1[i] * alpha + (fRawAccel1[i] * (1.0 - alpha));
+				U_Print_float(USART1, fRawAccel[i]);
 				U_Print_Char(USART1, "   ");
-				U_Print_float(USART1, RawAccel1[i]);
+				U_Print_float(USART1, fRawAccel1[i]);
 				U_Print_Char(USART1, "\n");
 			}
 		for (int i = 0; i < 3; i++)
 		{
-			U_Print_float(USART1, RawGyro[i]);
+			fRawGyro[i] = RawGyro[i] * alpha + (fRawGyro[i] * (1.0 - alpha));
+			fRawGyro1[i] = RawGyro1[i] * alpha + (fRawGyro1[i] * (1.0 - alpha));
+			U_Print_float(USART1, fRawGyro[i]);
 			U_Print_Char(USART1, "   ");
-			U_Print_float(USART1, RawGyro1[i]);
+			U_Print_float(USART1, fRawGyro1[i]);
 			U_Print_Char(USART1, "\n");
 		}
 		U_Print_Char(USART1, "MAG\n");
+		
+		//AK8963_turn_off(1);
+		//AK8963_turn_off(0);
+		
+		AK8963_turn_on(0);
+		Initialize_AK8963();
 		Get_Mag(Mag);
+		AK8963_turn_off(0);
+		
+		AK8963_turn_on(1);
+		Initialize_AK8963();
 		Get_Mag(Mag1);
+		AK8963_turn_off(1);
+		
 		for (int i =0 ; i < 3; i++)
 			{
-				U_Print_float(USART1, Mag[i]);
+				fMag[i] = Mag[i] * alpha + (fMag[i] * (1.0 - alpha));
+				fMag1[i] = Mag1[i] * alpha + (fMag1[i] * (1.0 - alpha));
+				U_Print_float(USART1, fMag[i]);
 				U_Print_Char(USART1, "   ");
-				U_Print_float(USART1, Mag1[i]);
+				U_Print_float(USART1, fMag1[i]);
 				U_Print_Char(USART1, "\n");
 			}
 		double R = sqrt(float((RawAccel[0] * RawAccel[0] + RawAccel[1] * RawAccel[1] + RawAccel[2] * RawAccel[2] )));
@@ -309,18 +335,24 @@ int main()
 		if (heading > 2*PI) heading -= 2*PI;
 		if (heading1 < 0) heading1 += 2*PI;
 		if (heading1 > 2*PI) heading1 -= 2*PI;
-		U_Print_float(USART1, heading * Rad2Dree);
-		U_Print_Char(USART1, "   ");
-		U_Print_float(USART1, heading1 * Rad2Dree);
-		U_Print_Char(USART1, "\n");
+		//U_Print_float(USART1, heading * Rad2Dree);
+		//U_Print_Char(USART1, "   ");
+		//U_Print_float(USART1, heading1 * Rad2Dree);
+		//U_Print_Char(USART1, "\n");
+		
+		float pitch = acos((RawAccel[0]/R));
+		pitch += declinationAngle;
+		if (pitch < 0) pitch += 2*PI;
+		if (pitch > 2*PI) pitch -= 2*PI;
+		
 		/************************** Put in Kalman **************************/	
 		kalman_predict(&filter_pitch, RawGyro[0],  ( time_now - time_pre));
-    kalman_update(&filter_pitch, acos((RawAccel[1]/R)));
+    kalman_update(&filter_pitch, acos((RawAccel[0]/R)));
     kalman_predict(&filter_roll, RawGyro[1],  (time_now - time_pre));
     kalman_update(&filter_roll, acos(RawAccel[1]/R));
 		
 		kalman_predict(&filter_pitch1, RawGyro1[0],  ( time_now - time_pre));
-    kalman_update(&filter_pitch1, acos((RawAccel1[1]/R)));
+    kalman_update(&filter_pitch1, acos((RawAccel1[0]/R)));
     kalman_predict(&filter_roll1, RawGyro1[1],  (time_now - time_pre));
     kalman_update(&filter_roll1, acos(RawAccel1[1]/R));
 		
@@ -348,24 +380,27 @@ int main()
 		angle[2] = kalman_get_angle(&filter_yaw);
 		angle1[2] = kalman_get_angle(&filter_yaw1);
 		
-		if (flag == 1)
+		//if (flag == 1)
 		{
 			U_Print_Char(USART1, "Pitch ");
 			U_Print_float(USART1, angle[1] * Rad2Dree);
-			U_Print_float(USART1, angle1[1] * Rad2Dree);
+			U_Print_Char(USART1, "  ");
+			U_Print_float(USART1, angle1[2] * Rad2Dree);
 			U_Print_Char(USART1, " \n");
 			U_Print_Char(USART1, "Roll ");
 			U_Print_float(USART1, angle[0] * Rad2Dree);
+			U_Print_Char(USART1, "  ");
 			U_Print_float(USART1, angle1[0] * Rad2Dree);
 			U_Print_Char(USART1, " \n");
 			U_Print_Char(USART1, "Yaw ");
 			U_Print_float(USART1, angle[2] * Rad2Dree);
-			U_Print_float(USART1, angle1[2] * Rad2Dree);
+			U_Print_Char(USART1, "  ");
+			U_Print_float(USART1, angle1[1] * Rad2Dree);
 			U_Print_Char(USART1, " \n");
 		}
-		else U_Print_Char(USART1, "not \n");
+		//else U_Print_Char(USART1, "not \n");
 		timer = 0;
-		while (timer < 1);
+		while (timer < 250);
 		led_toggle();
 	}
 }
@@ -477,8 +512,8 @@ int Get_Central(kalman p, kalman r, kalman y)
 				*RawGyro = new float[3],
 				*Mag = new float[3],
 				angle[3];
-	Get_Accel(RawAccel);
-	Get_Gyro(RawGyro);
+	Get_Accel(RawAccel,0);
+	Get_Gyro(RawGyro,0);
 	Get_Mag(Mag);
 	double R = sqrt(float((RawAccel[0] * RawAccel[0] + RawAccel[1] * RawAccel[1] + RawAccel[2] * RawAccel[2] )));
 	if ((Mag[0] > 32768) && ( Mag[1] < 32768))

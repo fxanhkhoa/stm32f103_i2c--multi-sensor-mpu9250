@@ -343,10 +343,13 @@ void AK8963_Calibrate(float *MCali)
 *
 *
 ***********************************************************************************/
-void Get_Accel(float *Accel)
+void Get_Accel(float *Accel, int ado_bit)
 {
 	u8 *data = new u8[6];
-	Read_data_buffer(ACCEL_XOUT_H,data , MPU9250_ADDRESS_DEFAULT, 6);
+	u8 address;
+	if (ado_bit == 0) address = MPU9250_ADDRESS_DEFAULT;
+	else address = MPU9250_ADDRESS_DEFAULT_ADO_HIGH;
+	Read_data_buffer(ACCEL_XOUT_H,data , address, 6);
 	Accel[0] = (data[0] << 8) | data[1];
 	Accel[1] = (data[2] << 8) | data[3];
 	Accel[2] = (data[4] << 8) | data[5];
@@ -356,10 +359,13 @@ void Get_Accel(float *Accel)
 *
 *
 ***********************************************************************************/
-void Get_Gyro(float *Gyro)
+void Get_Gyro(float *Gyro, int ado_bit)
 {
 	u8 *data = new u8[6];
-	Read_data_buffer(GYRO_XOUT_H, data, MPU9250_ADDRESS_DEFAULT, 6);
+	u8 address;
+	if (ado_bit == 0) address = MPU9250_ADDRESS_DEFAULT;
+	else address = MPU9250_ADDRESS_DEFAULT_ADO_HIGH;
+	Read_data_buffer(GYRO_XOUT_H, data, address, 6);
 	Gyro[0] = (data[0] << 8) + data[1];
 	Gyro[1] = (data[2] << 8) + data[3];
 	Gyro[2] = (data[4] << 8) + data[5];
