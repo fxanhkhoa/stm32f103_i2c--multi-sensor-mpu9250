@@ -245,7 +245,7 @@ void Set_Clock(int ado_bit);
 *********************************************************/
 void MPU9250_I2C_Init(int ADO_bit);
 void Initialize(int ado_bit);
-void Initialize_AK8963();
+void Initialize_AK8963(float *destination);
 void Set_Gyro_Range(int ado_bit);
 void Set_Accel_Range(int ado_bit);
 void Get_Mag(float *Mag);
@@ -256,6 +256,13 @@ void Get_Gyro(float *Gyro, int ado_bit);
 void delay(u32 k);
 void AK8963_turn_off(int ado_bit);
 void AK8963_turn_on(int ado_bit);
+void MPU9250_Reset(int ado_bit);
+void calibrateMPU9250(float * dest1, float * dest2);
+
+/*******************************************************
+***			Variables
+*******************************************************/
+
 
 #ifdef __cplusplus
 }

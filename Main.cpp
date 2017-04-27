@@ -22,9 +22,11 @@ int Get_Central(kalman p, kalman r, kalman y);
 void LowPass_Accel(Accel fAcc[]);
 void LowPass_Gyro(Gyro fGyro[]);
 void LowPass_Mag(Mag fMag[]);
+void Print_Bias();
 
 uint16_t timer, time_pre =0, time_now = 0;
-
+float gyroBias[3] = {0, 0, 0}, accelBias[3] = {0, 0, 0}; // Bias corrections for gyro and accelerometer
+float magCalibration[3] = {0, 0, 0}, magbias[3] = {0, 0, 0};  // Factory mag calibration and mag bias
 
 	
 int main()
@@ -131,15 +133,20 @@ int main()
 /**************************************************************************************************
 *											Check_Connection
 **************************************************************************************************/
-	//float *MCali = new float[3];
+	/*---- Reset MPU9250 ----*/
+	MPU9250_Reset(0);
+	MPU9250_Reset(1);
+	
 		U_Print_Char(USART1,"let's go\n");
-			//MPU6050_I2C_Init();
+			
 		/*----- Check Connection of MPU9250 -----*/
 		if (Check_Connection(WHO_AM_I_MPU9250, MPU9250_ADDRESS_DEFAULT, 0x73))
 		{
 			U_Print_Char(USART1, "Found MPU9250 - number 1 ");
+			calibrateMPU9250(gyroBias, accelBias);
+			Print_Bias();
 			Initialize(0);
-			//Write_Bytes(INT_PIN_CFG, MPU9250_ADDRESS_DEFAULT, 0x22);
+			//Write_Byte(INT_PIN_CFG, MPU9250_ADDRESS_DEFAULT, 0x22);
 			//u8 *a = new u8[1];
 			//Read_data_buffer(INT_PIN_CFG, a, MPU9250_ADDRESS_DEFAULT, 1);
 			//U_Print(USART1, a[0]);
@@ -153,7 +160,7 @@ int main()
 		if (Check_Connection(WHO_AM_I_AK8963, (AK8963_ADDRESS_DEFAULT), 0x48))
 		{
 			U_Print_Char(USART1, "Found AK8963\n");
-			Initialize_AK8963();
+			Initialize_AK8963(magCalibration);
 			U_Print_Char(USART1, "AK8963 Initialized...\n");
 		}
 		else
@@ -168,7 +175,7 @@ int main()
 		{
 			U_Print_Char(USART1, "Found MPU9250 - number 2 ");
 			Initialize(1);
-			//Write_Bytes(INT_PIN_CFG, MPU9250_ADDRESS_DEFAULT, 0x22);
+			//Write_Byte(INT_PIN_CFG, MPU9250_ADDRESS_DEFAULT, 0x22);
 			//u8 *a = new u8[1];
 			//Read_data_buffer(INT_PIN_CFG, a, MPU9250_ADDRESS_DEFAULT, 1);
 			//U_Print(USART1, a[0]);
@@ -182,7 +189,7 @@ int main()
 		if (Check_Connection(WHO_AM_I_AK8963, (AK8963_ADDRESS_DEFAULT), 0x48))
 		{
 			U_Print_Char(USART1, "Found AK8963\n");
-			Initialize_AK8963();
+			//Initialize_AK8963();
 			U_Print_Char(USART1, "AK8963 Initialized...\n");
 		}
 		else
@@ -216,6 +223,10 @@ int main()
 	
 		time_pre = 0;
 		time_now = 0;
+		
+		magbias[0] = +470.;  // User environmental x-axis correction in milliGauss, should be automatically calculated
+    magbias[1] = +120.;  // User environmental x-axis correction in milliGauss
+    magbias[2] = +125.;  // User environmental x-axis correction in milliGauss
 /**************************************************************************************************
 *											Function Init
 **************************************************************************************************/	
@@ -311,7 +322,7 @@ int main()
 		if (fMag[1].z > 32768)				fMag[1].z -= 98304;
 			
 		float heading = atan2(fMag[0].y, fMag[0].x);
-		float heading1 = atan2(fMag[1].y, fMag[1].z);
+		float heading1 = atan2(fMag[1].z, fMag[1].y);
 		heading += declinationAngle;
 		heading1 += declinationAngle;
 		if (heading < 0) heading += 2*PI;
@@ -376,22 +387,24 @@ int main()
 			U_Print_Char(USART1, "Pitch ");
 			U_Print_float(USART1, angle[0].roll * Rad2Dree);// pitch mpu 1
 			U_Print_Char(USART1, "  ");
-			U_Print_float(USART1, angle[1].yaw * Rad2Dree);// yaw mpu 2
-			U_Print_Char(USART1, "  ");
-			U_Print_float(USART1, angle[2].pitch * Rad2Dree);// roll mpu 3
-			U_Print_Char(USART1, " \n");
-			U_Print_Char(USART1, "Roll ");
-			U_Print_float(USART1, angle[0].pitch * Rad2Dree);
-			U_Print_Char(USART1, "  ");
-			U_Print_float(USART1, angle[1].pitch * Rad2Dree);//
-			U_Print_Char(USART1, " \n");
-			U_Print_Char(USART1, "Yaw ");
-			U_Print_float(USART1, angle[0].yaw * Rad2Dree);// yaw mpu 1
-			U_Print_Char(USART1, "  ");
+//			U_Print_float(USART1, angle[1].yaw * Rad2Dree);// yaw mpu 2
+//			U_Print_Char(USART1, "  ");
+//			U_Print_float(USART1, angle[2].pitch * Rad2Dree);// roll mpu 3
+//			U_Print_Char(USART1, " \n");
+//			U_Print_Char(USART1, "Roll ");
+//			U_Print_float(USART1, angle[0].pitch * Rad2Dree);
+//			U_Print_Char(USART1, "  ");
+//			U_Print_float(USART1, angle[1].pitch * Rad2Dree);//
+//			U_Print_Char(USART1, " \n");
+//			U_Print_Char(USART1, "Yaw ");
+//			U_Print_float(USART1, angle[0].yaw * Rad2Dree);// yaw mpu 1
+//			U_Print_Char(USART1, "  ");
 			U_Print_float(USART1, angle[1].roll * Rad2Dree);// pitch mpu 2
 			U_Print_Char(USART1, "  ");
 			U_Print_float(USART1, angle[2].roll * Rad2Dree);// pitch mpu 3
 			U_Print_Char(USART1, " \n");
+			U_Print_float(USART1, fAcc[0].x/R);
+			U_Print_Char(USART1, "\n");
 //		}
 		//else U_Print_Char(USART1, "not \n");
 		timer = 0;
@@ -565,9 +578,13 @@ void LowPass_Accel(Accel fAcc[])
 {
 	float RawAccel[6];
 		Get_Accel(RawAccel, 0);
-		fAcc[0].x = RawAccel[0] * alpha + (fAcc[0].x * (1.0 - alpha));
-		fAcc[0].y = RawAccel[1] * alpha + (fAcc[0].y * (1.0 - alpha));
-		fAcc[0].z = RawAccel[2] * alpha + (fAcc[0].z * (1.0 - alpha));
+//		fAcc[0].x = RawAccel[0] * alpha + (fAcc[0].x * (1.0 - alpha));
+//		fAcc[0].y = RawAccel[1] * alpha + (fAcc[0].y * (1.0 - alpha));
+//		fAcc[0].z = RawAccel[2] * alpha + (fAcc[0].z * (1.0 - alpha));
+	
+		fAcc[0].x = RawAccel[0] - accelBias[0];
+		fAcc[0].y = RawAccel[1] - accelBias[1];
+		fAcc[0].z = RawAccel[2] - accelBias[2];
 		
 		Get_Accel(RawAccel, 1);
 		fAcc[1].x = RawAccel[0] * alpha + (fAcc[0].x * (1.0 - alpha));
@@ -579,38 +596,41 @@ void LowPass_Accel(Accel fAcc[])
 		fAcc[2].y = RawAccel[1] * alpha + (fAcc[0].y * (1.0 - alpha));
 		fAcc[2].z = RawAccel[2] * alpha + (fAcc[0].z * (1.0 - alpha));
 		
-//		U_Print_Char(USART1, "Accel MPU 0: ");
-//		U_Print_float(USART1, fAcc[0].x);
-//		U_Print_Char(USART1, "  ");
-//		U_Print_float(USART1, fAcc[0].y);
-//		U_Print_Char(USART1, "  ");
-//		U_Print_float(USART1, fAcc[0].z);
-//		U_Print_Char(USART1, "\n");
-//		
-//		U_Print_Char(USART1, "Accel MPU 1: ");
-//		U_Print_float(USART1, fAcc[1].x);
-//		U_Print_Char(USART1, "  ");
-//		U_Print_float(USART1, fAcc[1].y);
-//		U_Print_Char(USART1, "  ");
-//		U_Print_float(USART1, fAcc[1].z);
-//		U_Print_Char(USART1, "\n");
-//		
-//		U_Print_Char(USART1, "Accel MPU 2: ");
-//		U_Print_float(USART1, fAcc[2].x);
-//		U_Print_Char(USART1, "  ");
-//		U_Print_float(USART1, fAcc[2].y);
-//		U_Print_Char(USART1, "  ");
-//		U_Print_float(USART1, fAcc[2].z);
-//		U_Print_Char(USART1, "\n");
+		U_Print_Char(USART1, "Accel MPU 0: ");
+		U_Print_float(USART1, fAcc[0].x);
+		U_Print_Char(USART1, "  ");
+		U_Print_float(USART1, fAcc[0].y);
+		U_Print_Char(USART1, "  ");
+		U_Print_float(USART1, fAcc[0].z);
+		U_Print_Char(USART1, "\n");
+		
+		U_Print_Char(USART1, "Accel MPU 1: ");
+		U_Print_float(USART1, fAcc[1].x);
+		U_Print_Char(USART1, "  ");
+		U_Print_float(USART1, fAcc[1].y);
+		U_Print_Char(USART1, "  ");
+		U_Print_float(USART1, fAcc[1].z);
+		U_Print_Char(USART1, "\n");
+		
+		U_Print_Char(USART1, "Accel MPU 2: ");
+		U_Print_float(USART1, fAcc[2].x);
+		U_Print_Char(USART1, "  ");
+		U_Print_float(USART1, fAcc[2].y);
+		U_Print_Char(USART1, "  ");
+		U_Print_float(USART1, fAcc[2].z);
+		U_Print_Char(USART1, "\n");
 }
 
 void LowPass_Gyro(Gyro fGyro[])
 {
 	float Raw[6];
 		Get_Gyro(Raw, 0);
-		fGyro[0].x = Raw[0] * alpha + (fGyro[0].x * (1.0 - alpha));
-		fGyro[0].y = Raw[1] * alpha + (fGyro[0].y * (1.0 - alpha));
-		fGyro[0].z = Raw[2] * alpha + (fGyro[0].z * (1.0 - alpha));
+//		fGyro[0].x = Raw[0] * alpha + (fGyro[0].x * (1.0 - alpha));
+//		fGyro[0].y = Raw[1] * alpha + (fGyro[0].y * (1.0 - alpha));
+//		fGyro[0].z = Raw[2] * alpha + (fGyro[0].z * (1.0 - alpha));
+		fGyro[0].x = Raw[0] - gyroBias[0];
+		fGyro[0].y = Raw[1] - gyroBias[1];
+		fGyro[0].z = Raw[2]	- gyroBias[2];
 		
 		Get_Gyro(Raw, 1);
 		fGyro[1].x = Raw[0] * alpha + (fGyro[0].x * (1.0 - alpha));
@@ -622,42 +642,46 @@ void LowPass_Gyro(Gyro fGyro[])
 		fGyro[2].y = Raw[4] * alpha + (fGyro[0].y * (1.0 - alpha));
 		fGyro[2].z = Raw[5] * alpha + (fGyro[0].z * (1.0 - alpha));
 		
-//		U_Print_Char(USART1, "Gyro MPU 0: ");
-//		U_Print_float(USART1, fGyro[0].x);
-//		U_Print_Char(USART1, "  ");
-//		U_Print_float(USART1, fGyro[0].y);
-//		U_Print_Char(USART1, "  ");
-//		U_Print_float(USART1, fGyro[0].z);
-//		U_Print_Char(USART1, "\n");
-//		
-//		U_Print_Char(USART1, "Gyro MPU 1: ");
-//		U_Print_float(USART1, fGyro[1].x);
-//		U_Print_Char(USART1, "  ");
-//		U_Print_float(USART1, fGyro[1].y);
-//		U_Print_Char(USART1, "  ");
-//		U_Print_float(USART1, fGyro[1].z);
-//		U_Print_Char(USART1, "\n");
-//		
-//		U_Print_Char(USART1, "Gyro MPU 2: ");
-//		U_Print_float(USART1, fGyro[2].x);
-//		U_Print_Char(USART1, "  ");
-//		U_Print_float(USART1, fGyro[2].y);
-//		U_Print_Char(USART1, "  ");
-//		U_Print_float(USART1, fGyro[2].z);
-//		U_Print_Char(USART1, "\n");
+		U_Print_Char(USART1, "Gyro MPU 0: ");
+		U_Print_float(USART1, fGyro[0].x);
+		U_Print_Char(USART1, "  ");
+		U_Print_float(USART1, fGyro[0].y);
+		U_Print_Char(USART1, "  ");
+		U_Print_float(USART1, fGyro[0].z);
+		U_Print_Char(USART1, "\n");
+		
+		U_Print_Char(USART1, "Gyro MPU 1: ");
+		U_Print_float(USART1, fGyro[1].x);
+		U_Print_Char(USART1, "  ");
+		U_Print_float(USART1, fGyro[1].y);
+		U_Print_Char(USART1, "  ");
+		U_Print_float(USART1, fGyro[1].z);
+		U_Print_Char(USART1, "\n");
+		
+		U_Print_Char(USART1, "Gyro MPU 2: ");
+		U_Print_float(USART1, fGyro[2].x);
+		U_Print_Char(USART1, "  ");
+		U_Print_float(USART1, fGyro[2].y);
+		U_Print_Char(USART1, "  ");
+		U_Print_float(USART1, fGyro[2].z);
+		U_Print_Char(USART1, "\n");
 }
 
 void LowPass_Mag(Mag fMag[])
 {
 	float Raw[3];
 		AK8963_turn_on(0);
-		Initialize_AK8963();
+		Initialize_AK8963(Raw);
 		Get_Mag(Raw);
 		AK8963_turn_off(0);
 	
-		fMag[0].x = Raw[0] * alpha + (fMag[0].x * (1.0 - alpha));
-		fMag[0].y = Raw[1] * alpha + (fMag[0].y * (1.0 - alpha));
-		fMag[0].z = Raw[2] * alpha + (fMag[0].z * (1.0 - alpha));
+//		fMag[0].x = Raw[0] * alpha + (fMag[0].x * (1.0 - alpha));
+//		fMag[0].y = Raw[1] * alpha + (fMag[0].y * (1.0 - alpha));
+//		fMag[0].z = Raw[2] * alpha + (fMag[0].z * (1.0 - alpha));
+	
+		fMag[0].x = Raw[0]*magCalibration[0] - magbias[0];
+		fMag[0].y = Raw[1]*magCalibration[1] - magbias[1];
+		fMag[0].z = Raw[2]*magCalibration[2] - magbias[2];
 	
 		U_Print_Char(USART1, "Mag MPU 0: ");
 		U_Print_float(USART1, fMag[0].x);
@@ -668,7 +692,7 @@ void LowPass_Mag(Mag fMag[])
 		U_Print_Char(USART1, "\n");
 		
 		AK8963_turn_on(1);
-		Initialize_AK8963();
+		Initialize_AK8963(Raw);
 		Get_Mag(Raw);
 		AK8963_turn_off(1);
 		
@@ -676,11 +700,28 @@ void LowPass_Mag(Mag fMag[])
 		fMag[1].y = Raw[1] * alpha + (fMag[1].y * (1.0 - alpha));
 		fMag[1].z = Raw[2] * alpha + (fMag[1].z * (1.0 - alpha));
 	
-		U_Print_Char(USART1, "Mag MPU 1: ");
-		U_Print_float(USART1, fMag[1].x);
-		U_Print_Char(USART1, "  ");
-		U_Print_float(USART1, fMag[1].y);
-		U_Print_Char(USART1, "  ");
-		U_Print_float(USART1, fMag[1].z);
-		U_Print_Char(USART1, "\n");
+//		U_Print_Char(USART1, "Mag MPU 1: ");
+//		U_Print_float(USART1, fMag[1].x);
+//		U_Print_Char(USART1, "  ");
+//		U_Print_float(USART1, fMag[1].y);
+//		U_Print_Char(USART1, "  ");
+//		U_Print_float(USART1, fMag[1].z);
+//		U_Print_Char(USART1, "\n");
+}
+
+void Print_Bias()
+{
+	U_Print_float(USART1, accelBias[0]);
+	U_Print_Char(USART1,"   ");
+	U_Print_float(USART1, accelBias[0]);
+	U_Print_Char(USART1,"   ");
+	U_Print_float(USART1, accelBias[0]);
+	U_Print_Char(USART1,"\n");
+			
+	U_Print_float(USART1, gyroBias[0]);
+	U_Print_Char(USART1,"   ");
+	U_Print_float(USART1, gyroBias[0]);
+	U_Print_Char(USART1,"   ");
+	U_Print_float(USART1, gyroBias[0]);
+	U_Print_Char(USART1,"   ");
 }
