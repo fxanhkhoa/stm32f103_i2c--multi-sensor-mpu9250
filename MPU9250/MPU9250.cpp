@@ -3,8 +3,8 @@
 /******************************************************************
 *											Default Range
 ******************************************************************/
-char currentGyroRange = 0,
-	  currentAcceleroRange = 0,
+char currentGyroRange = 3,
+	  currentAcceleroRange = 3,
 		mscale = 1;
 
 void MPU9250_I2C_Init(int ADO_bit)
@@ -406,9 +406,9 @@ void Get_Mag(float *Mag)
 		Read_data_buffer(AK8963_ADDRESS_DEFAULT, AK8963_XOUT_L, data,  7);
 		if (!(data[6] & 0x08))
 		{
-			Mag[0] = float(data[0] + (data[1] << 8));
-			Mag[1] = float(data[2] + (data[3] << 8));
-			Mag[2] = float(data[4] + (data[5] << 8));
+			Mag[0] = int16_t(data[0] + (data[1] << 8));
+			Mag[1] = int16_t(data[2] + (data[3] << 8));
+			Mag[2] = int16_t(data[4] + (data[5] << 8));
 		}
 		switch (mscale)
 		{
@@ -458,9 +458,9 @@ void Raw_Accel_Gyro(float AccelGyro[])
 	Read_data_buffer(MPU9250_ADDRESS_DEFAULT, ACCEL_XOUT_H, data ,  14);
 	/**************** Calculate into AccelGyro **********************/
 		/*-------- Accelero ---------*/
-			AccelGyro[0] = (data[0] << 8) + data[1]; // Accel_X
-			AccelGyro[1] = (data[2] << 8) + data[3]; // Accel_Y
-			AccelGyro[2] = (data[4] << 8) + data[5]; // Accel_Z
+			AccelGyro[0] = int16_t((data[0] << 8) + data[1]); // Accel_X
+			AccelGyro[1] = int16_t((data[2] << 8) + data[3]); // Accel_Y
+			AccelGyro[2] = int16_t((data[4] << 8) + data[5]); // Accel_Z
 		/*-------- Gyrometer --------*/
 			AccelGyro[3] = (data[8] << 8) + data[9]; // Gyro_X
 			AccelGyro[4] = (data[10] << 8) + data[11]; // Gyro_X
@@ -535,19 +535,19 @@ void AK8963_Calibrate(float *MCali)
 void Get_Accel(float *Accel, int ado_bit)
 {
 	u8 *data = new u8[6];
-	u16 temp;
+	int16_t temp;
 	u8 address;
 	if (ado_bit == 0) address = MPU9250_ADDRESS_DEFAULT;
 	else address = MPU9250_ADDRESS_DEFAULT_ADO_HIGH;
 	Read_data_buffer(address, ACCEL_XOUT_H,data ,  6);
-	temp = (data[0] << 8) | data[1];;
+	temp = int16_t((data[0] << 8) | data[1]);
 	Accel[0] = float(temp);
 	
-	temp = (data[2] << 8) | data[3];
-	Accel[1] = float(temp);
+	temp = int16_t((data[2] << 8) | data[3]);
+	Accel[1] = (temp);
 	
-	temp = (data[4] << 8) | data[5];
-	Accel[2] = float(temp);
+	temp = int16_t((data[4] << 8) | data[5]);
+	Accel[2] = (temp);
 	
 	/*---------ACCELERO--------*/
 		if (currentAcceleroRange == MPU9250_ACCELERO_RANGE_2G) {
@@ -581,17 +581,17 @@ void Get_Gyro(float *Gyro, int ado_bit)
 {
 	u8 *data = new u8[6];
 	u8 address;
-	u16 temp;
+	int16_t temp;
 	if (ado_bit == 0) address = MPU9250_ADDRESS_DEFAULT;
 	else address = MPU9250_ADDRESS_DEFAULT_ADO_HIGH;
 	Read_data_buffer(address, GYRO_XOUT_H, data,  6);
-	temp = (data[0] << 8) | data[1];;
+	temp = int16_t((data[0] << 8) | data[1]);
 	Gyro[0] = float(temp);
 	
-	temp = (data[2] << 8) | data[3];
+	temp = int16_t((data[2] << 8) | data[3]);
 	Gyro[1] = float(temp);
 	
-	temp = (data[4] << 8) | data[5];
+	temp = int16_t((data[4] << 8) | data[5]);
 	Gyro[2] = float(temp);
 	
 	/*-----------GYRO------------*/

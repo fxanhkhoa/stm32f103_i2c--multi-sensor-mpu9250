@@ -37,8 +37,8 @@
  * @{
  */
  
-uint8_t currentAcceleroRange_MPU6050 = 4;
-uint8_t currentGyroRange_MPU6050 = 4;
+uint8_t currentAcceleroRange_MPU6050 = 3;
+uint8_t currentGyroRange_MPU6050 = 3;
 
 /** Power on and prepare for general usage.
  * This will activate the device and take it out of sleep mode (which must be done
@@ -236,28 +236,25 @@ void MPU6050_GetRawAccelGyro(float AccelGyro[])
 		/*---- divider ----*/
 		/*---------ACCELERO--------*/
 		if (currentAcceleroRange_MPU6050 == MPU6050_ACCELERO_RANGE_2G) {
-        AccelGyro[0]=(float) AccelGyro[0] / 16384.0 * 9.81;
-        AccelGyro[1]=(float) AccelGyro[1] / 16384.0 * 9.81;
-        AccelGyro[2]=(float) AccelGyro[2] / 16384.0 * 9.81;
+        AccelGyro[0] *= 2.0/32768.0;
+        AccelGyro[1] *= 2.0/32768.0;
+        AccelGyro[2] *= 2.0/32768.0;
         }
     if (currentAcceleroRange_MPU6050 == MPU6050_ACCELERO_RANGE_4G){
-        AccelGyro[0]=(float) AccelGyro[0] / 8192.0 * 9.81;
-        AccelGyro[1]=(float) AccelGyro[1] / 8192.0 * 9.81;
-        AccelGyro[2]=(float) AccelGyro[2] / 8192.0 * 9.81;
+        AccelGyro[0] *= 4.0/32768.0;
+        AccelGyro[1] *= 4.0/32768.0;
+        AccelGyro[2] *= 4.0/32768.0;
         }
     if (currentAcceleroRange_MPU6050 == MPU6050_ACCELERO_RANGE_8G){
-        AccelGyro[0]=(float) AccelGyro[0] / 4096.0 * 9.81;
-        AccelGyro[1]=(float) AccelGyro[1] / 4096.0 * 9.81;
-        AccelGyro[2]=(float) AccelGyro[2] / 4096.0 * 9.81;
+        AccelGyro[0] *= 8.0/32768.0;
+        AccelGyro[1] *= 8.0/32768.0;
+        AccelGyro[2] *= 8.0/32768.0;
         }
     if (currentAcceleroRange_MPU6050 == MPU6050_ACCELERO_RANGE_16G){
-        AccelGyro[0]=(float) AccelGyro[0] / 2048.0 * 9.81;
-        AccelGyro[1]=(float) AccelGyro[1] / 2048.0 * 9.81;
-        AccelGyro[2]=(float) AccelGyro[2] / 2048.0 * 9.81;
+        AccelGyro[0] *= 16.0/32768.0;
+        AccelGyro[1] *= 16.0/32768.0;
+        AccelGyro[2] *= 16.0/32768.0;
         }
-				AccelGyro[0]*=2;
-        AccelGyro[1]*=2;   
-        AccelGyro[2]*=2;
 		/*-----------GYRO------------*/
 		if (currentGyroRange_MPU6050 == MPU6050_GYRO_RANGE_250) {
         AccelGyro[3]=(float)AccelGyro[3] / 7505.7;
