@@ -257,24 +257,24 @@ void MPU6050_GetRawAccelGyro(float AccelGyro[])
         }
 		/*-----------GYRO------------*/
 		if (currentGyroRange_MPU6050 == MPU6050_GYRO_RANGE_250) {
-        AccelGyro[3]=(float)AccelGyro[3] / 7505.7;
-        AccelGyro[4]=(float)AccelGyro[4] / 7505.7;
-        AccelGyro[5]=(float)AccelGyro[5] / 7505.7;
+        AccelGyro[3] *= 250.0/32768.0;
+        AccelGyro[4] *= 250.0/32768.0;
+        AccelGyro[5] *= 250.0/32768.0;
         }
     if (currentGyroRange_MPU6050 == MPU6050_GYRO_RANGE_500){
-        AccelGyro[3]=(float)AccelGyro[3] / 3752.9;
-        AccelGyro[4]=(float)AccelGyro[4] / 3752.9;
-        AccelGyro[5]=(float)AccelGyro[5] / 3752.9;
+        AccelGyro[0] *= 500.0/32768.0;
+        AccelGyro[1] *= 500.0/32768.0;
+        AccelGyro[2] *= 500.0/32768.0;
         }
     if (currentGyroRange_MPU6050 == MPU6050_GYRO_RANGE_1000){
-        AccelGyro[3]=(float)AccelGyro[3] / 1879.3;;
-        AccelGyro[4]=(float)AccelGyro[4] / 1879.3;
-        AccelGyro[5]=(float)AccelGyro[5] / 1879.3;
+        AccelGyro[0] *= 1000.0/32768.0;
+        AccelGyro[1] *= 1000.0/32768.0;
+        AccelGyro[2] *= 1000.0/32768.0;
         }
     if (currentGyroRange_MPU6050 == MPU6050_GYRO_RANGE_2000){
-        AccelGyro[3]=(float)AccelGyro[3] / 939.7;
-        AccelGyro[4]=(float)AccelGyro[4] / 939.7;
-        AccelGyro[5]=(float)AccelGyro[5] / 939.7;
+        AccelGyro[0] *= 2000.0/32768.0;
+        AccelGyro[1] *= 2000.0/32768.0;
+        AccelGyro[2] *= 2000.0/32768.0;
         }
 }
 

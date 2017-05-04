@@ -350,7 +350,7 @@ int main()
     kalman_update(&filter_roll1, acos(fAcc[1].y/R1));
 		
 		kalman_predict(&filter_pitch1, fGyro[2].x,  ( time_now - time_pre));
-    kalman_update(&filter_pitch2, acos((fAcc[2].x/R2)));
+    kalman_update(&filter_pitch2, acos(fAcc[2].x/R2));
     kalman_predict(&filter_roll2, fGyro[2].y,  (time_now - time_pre));
     kalman_update(&filter_roll2, acos(fAcc[2].y/R2));
 		
@@ -611,13 +611,13 @@ void LowPass_Accel(Accel fAcc[])
 //		U_Print_float(USART1, fAcc[1].z);
 //		U_Print_Char(USART1, "\n");
 //		
-//		U_Print_Char(USART1, "Accel MPU 2: ");
-//		U_Print_float(USART1, fAcc[2].x);
-//		U_Print_Char(USART1, "  ");
-//		U_Print_float(USART1, fAcc[2].y);
-//		U_Print_Char(USART1, "  ");
-//		U_Print_float(USART1, fAcc[2].z);
-//		U_Print_Char(USART1, "\n");
+		U_Print_Char(USART1, "Accel MPU 2: ");
+		U_Print_float(USART1, fAcc[2].x);
+		U_Print_Char(USART1, "  ");
+		U_Print_float(USART1, fAcc[2].y);
+		U_Print_Char(USART1, "  ");
+		U_Print_float(USART1, fAcc[2].z);
+		U_Print_Char(USART1, "\n");
 }
 
 void LowPass_Gyro(Gyro fGyro[])
@@ -668,7 +668,7 @@ void LowPass_Gyro(Gyro fGyro[])
 
 void LowPass_Mag(Mag fMag[])
 {
-	float Raw[3];
+		float Raw[3];
 		AK8963_turn_on(0);
 		Initialize_AK8963(Raw);
 		Get_Mag(Raw);
