@@ -320,32 +320,20 @@ int main()
 //		if (fMag[1].y > 32768)				fMag[1].y -= 98304;
 //			
 //		if (fMag[1].z > 32768)				fMag[1].z -= 98304;
-			
-		float heading = atan2(fMag[0].y, fMag[0].x);
-		//float heading1 = atan2(fMag[1].z, fMag[1].y);
-		float heading1 = atan2(fMag[1].y, fMag[1].x);
-		heading += declinationAngle;
-		heading1 += declinationAngle;
-		if (heading < 0) heading += 2*PI;
-		if (heading > 2*PI) heading -= 2*PI;
-		if (heading1 < 0) heading1 += 2*PI;
-		if (heading1 > 2*PI) heading1 -= 2*PI;
-		//U_Print_float(USART1, heading * Rad2Dree);
-		//U_Print_Char(USART1, "   ");
-		//U_Print_float(USART1, heading1 * Rad2Dree);
-		//U_Print_Char(USART1, "\n");
+
+		
 		
 		
 		/************************** Put in Kalman **************************/	
 		//kalman_predict(&filter_pitch, RawGyro[0],  ( time_now - time_pre));
     //kalman_update(&filter_pitch, acos((RawAccel[0]/R)));
 		kalman_predict(&filter_pitch, fGyro[0].x,  ( time_now - time_pre));
-    kalman_update(&filter_pitch, (fAcc[0].x/R));
+    kalman_update(&filter_pitch, acos(fAcc[0].x/R));
     kalman_predict(&filter_roll, fGyro[0].y,  (time_now - time_pre));
     kalman_update(&filter_roll, acos(fAcc[0].y/R));
 		
 		kalman_predict(&filter_pitch1, fGyro[1].x,  ( time_now - time_pre));
-    kalman_update(&filter_pitch1, (fAcc[1].x/R));
+    kalman_update(&filter_pitch1, acos(fAcc[1].x/R));
     kalman_predict(&filter_roll1, fGyro[1].y,  (time_now - time_pre));
     kalman_update(&filter_roll1, acos(fAcc[1].y/R1));
 		
@@ -368,6 +356,24 @@ int main()
 		angle[2].pitch = kalman_get_angle(&filter_pitch2);
 		angle[2].roll = kalman_get_angle(&filter_roll2);
 		
+		//float xh,yh;
+		//xh= fMag[0].x*cos(angle[0].roll)+ fMag[0].z * sin(angle[0].roll);
+		//yh= fMag[0].x * sin(angle[0].pitch) + fMag[0].y * cos(angle[0].pitch) - fMag[0].z * sin(angle[0].pitch) * cos(angle[0].pitch);
+			
+		//float heading = atan(fAcc[0].z / R1);	
+		float heading = atan2(fMag[0].y, fMag[0].x);
+		//float heading1 = atan2(fMag[1].z, fMag[1].y);
+		float heading1 = atan2(fMag[1].y, fMag[1].x);
+		//heading -= declinationAngle; // declination get WEST
+		//heading1 -= declinationAngle;
+		if (heading < 0) heading += 2*PI;
+		if (heading > 2*PI) heading -= 2*PI;
+		if (heading1 < 0) heading1 += 2*PI;
+		if (heading1 > 2*PI) heading1 -= 2*PI;
+		//U_Print_float(USART1, heading * Rad2Dree);
+		//U_Print_Char(USART1, "   ");
+		//U_Print_float(USART1, heading1 * Rad2Dree);
+		//U_Print_Char(USART1, "\n");
 		
 		kalman_predict(&filter_yaw, fGyro[0].z,  (time_now - time_pre));
     kalman_update(&filter_yaw, heading);
@@ -682,13 +688,13 @@ void LowPass_Mag(Mag fMag[])
 //		fMag[0].y = Raw[1]*magCalibration[1] - magbias[1];
 //		fMag[0].z = Raw[2]*magCalibration[2] - magbias[2];
 	
-//		U_Print_Char(USART1, "Mag MPU 0: ");
-//		U_Print_float(USART1, fMag[0].x);
-//		U_Print_Char(USART1, "  ");
-//		U_Print_float(USART1, fMag[0].y);
-//		U_Print_Char(USART1, "  ");
-//		U_Print_float(USART1, fMag[0].z);
-//		U_Print_Char(USART1, "\n");
+		U_Print_Char(USART1, "Mag MPU 0: ");
+		U_Print_float(USART1, fMag[0].x);
+		U_Print_Char(USART1, "  ");
+		U_Print_float(USART1, fMag[0].y);
+		U_Print_Char(USART1, "  ");
+		U_Print_float(USART1, fMag[0].z);
+		U_Print_Char(USART1, "\n");
 		
 		AK8963_turn_on(1);
 		Initialize_AK8963(Raw);

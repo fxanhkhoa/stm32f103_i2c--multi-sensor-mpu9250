@@ -323,18 +323,18 @@ void Initialize_AK8963(float *destination)
 {
 	u8 rawData[3];
 	Write_Byte(AK8963_ADDRESS_DEFAULT, AK8963_CNTL,  0x00);
-	delay(10000);
+	//delay(10000);
 	Write_Byte(AK8963_ADDRESS_DEFAULT, AK8963_CNTL,  0x0F);
-	delay(10000);
+	//delay(10000);
 	Read_data_buffer(AK8963_ADDRESS_DEFAULT, AK8963_ASAX, rawData,  3);
 	destination[0] =  (float)(rawData[0] - 128)/256.0f + 1.0f;   // Return x-axis sensitivity adjustment values, etc.
   destination[1] =  (float)(rawData[1] - 128)/256.0f + 1.0f;  
   destination[2] =  (float)(rawData[2] - 128)/256.0f + 1.0f; 
 	Write_Byte(AK8963_ADDRESS_DEFAULT, AK8963_CNTL,  0x00);
-	delay(10000);
+	//delay(10000);
 	
 	Write_Byte(AK8963_ADDRESS_DEFAULT, AK8963_CNTL,  (mscale << 4) | 0x06);
-	delay(1000);
+	//delay(1000);
 }
 /***********************************************************************************
 *
