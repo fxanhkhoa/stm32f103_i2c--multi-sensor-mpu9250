@@ -487,6 +487,11 @@
               <FileType>1</FileType>
               <FilePath>.\Kalman\Kalman.c</FilePath>
             </File>
+            <File>
+              <FileName>Kalman_New.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\Kalman\Kalman_New.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

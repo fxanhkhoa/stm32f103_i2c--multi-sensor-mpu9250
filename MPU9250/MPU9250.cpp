@@ -406,9 +406,9 @@ void Get_Mag(float *Mag)
 		Read_data_buffer(AK8963_ADDRESS_DEFAULT, AK8963_XOUT_L, data,  7);
 		if (!(data[6] & 0x08))
 		{
-			Mag[0] = int16_t(data[0] + (data[1] << 8));
-			Mag[1] = int16_t(data[2] + (data[3] << 8));
-			Mag[2] = int16_t(data[4] + (data[5] << 8));
+			Mag[0] = float(int16_t(data[0] + (data[1] << 8)));
+			Mag[1] = float(int16_t(data[2] + (data[3] << 8)));
+			Mag[2] = float(int16_t(data[4] + (data[5] << 8)));
 		}
 		switch (mscale)
 		{

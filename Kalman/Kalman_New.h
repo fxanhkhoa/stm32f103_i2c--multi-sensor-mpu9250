@@ -20,7 +20,8 @@ class Kalman
 	public:
 		Kalman();
 		~Kalman();
-	  void GetAngle(float newAngle, float newRate,float dt);
+	  float GetAngle(float newAngle, float newRate,float dt);
+		void setAngle(float angle);
 };
 
 	

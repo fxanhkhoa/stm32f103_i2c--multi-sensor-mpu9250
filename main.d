@@ -38,3 +38,4 @@
 .\main.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\math.h
 .\main.o: .\Kalman\Kalman.c
 .\main.o: .\Kalman\kalman.h
+.\main.o: .\Kalman\Kalman_New.h

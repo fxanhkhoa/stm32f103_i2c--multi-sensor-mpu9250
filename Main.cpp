@@ -8,6 +8,7 @@
 #include "MPU6050.h"
 #include <math.h>
 #include "Kalman.c"
+#include "Kalman_New.h"
 
 #define Rad2Dree       57.295779513082320876798154814105
 #define PI	3.1415926535897932384626433832795
@@ -227,6 +228,8 @@ int main()
 		magbias[0] = +470.;  // User environmental x-axis correction in milliGauss, should be automatically calculated
     magbias[1] = +120.;  // User environmental x-axis correction in milliGauss
     magbias[2] = +125.;  // User environmental x-axis correction in milliGauss
+		
+		
 /**************************************************************************************************
 *											Function Init
 **************************************************************************************************/	
@@ -242,6 +245,9 @@ int main()
 		kalman_init(&filter_pitch2, R_matrix, Q_Gyro_matrix, Q_Accel_matrix);
 		kalman_init(&filter_roll2, R_matrix, Q_Gyro_matrix, Q_Accel_matrix);
 		kalman_init(&filter_yaw2, R_matrix, Q_Gyro_matrix, Q_Accel_matrix);
+		
+		//Kalman kalmanPitch;
+		//Kalman kalmanRoll;
 	while (1)
 	{
 /**************************************************************************************************
@@ -342,6 +348,8 @@ int main()
     kalman_predict(&filter_roll2, fGyro[2].y,  (time_now - time_pre));
     kalman_update(&filter_roll2, acos(fAcc[2].y/R2));
 		
+		//angle[0].pitch = kalmanPitch.GetAngle(acos(fAcc[0].x / R) * Rad2Dree, fGyro[0].x, (time_now - time_pre));
+		
 //		/************************** Put in Kalman **************************/	
 //		kalman_predict(&filter_pitch, RawGyro[0],  ( time_now - time_pre));
 //    kalman_update(&filter_pitch, float(atan(RawAccel[0] / sqrt(RawAccel[1]*RawAccel[1] + RawAccel[2]*RawAccel[2]))));
@@ -357,15 +365,15 @@ int main()
 		angle[2].roll = kalman_get_angle(&filter_roll2);
 		
 		//float xh,yh;
-		//xh= fMag[0].x*cos(angle[0].roll)+ fMag[0].z * sin(angle[0].roll);
-		//yh= fMag[0].x * sin(angle[0].pitch) + fMag[0].y * cos(angle[0].pitch) - fMag[0].z * sin(angle[0].pitch) * cos(angle[0].pitch);
+		//xh= fMag[0].x*cos(angle[0].roll)+ fMag[0].y * sin(angle[0].pitch) * sin(angle[0].roll) - fMag[0].z * cos(angle[0].pitch) * sin(angle[0].roll);
+		//yh= fMag[0].y * cos(angle[0].pitch) + fMag[0].z * sin(angle[0].pitch);
 			
-		//float heading = atan(fAcc[0].z / R1);	
+		//float heading = atan2(xh,yh);	
 		float heading = atan2(fMag[0].y, fMag[0].x);
 		//float heading1 = atan2(fMag[1].z, fMag[1].y);
 		float heading1 = atan2(fMag[1].y, fMag[1].x);
-		//heading -= declinationAngle; // declination get WEST
-		//heading1 -= declinationAngle;
+		heading += declinationAngle; // declination get WEST
+		heading1 -= declinationAngle;
 		if (heading < 0) heading += 2*PI;
 		if (heading > 2*PI) heading -= 2*PI;
 		if (heading1 < 0) heading1 += 2*PI;
@@ -393,18 +401,20 @@ int main()
 //		{
 			U_Print_Char(USART1, "Pitch ");
 			U_Print_float(USART1, angle[0].roll * Rad2Dree);// pitch mpu 1
+			//U_Print_float(USART1, angle[0].pitch * Rad2Dree);// pitch mpu 1
 			U_Print_Char(USART1, "  ");
 			U_Print_float(USART1, angle[1].yaw * Rad2Dree);// yaw mpu 2
 			U_Print_Char(USART1, "  ");
 			U_Print_float(USART1, angle[2].pitch * Rad2Dree);// roll mpu 3
 			U_Print_Char(USART1, " \n");
 			U_Print_Char(USART1, "Roll ");
-			U_Print_float(USART1, angle[0].pitch * Rad2Dree);
-			U_Print_Char(USART1, "  ");
+			//U_Print_float(USART1, angle[0].pitch * Rad2Dree);
+			//U_Print_Char(USART1, "  ");
 			U_Print_float(USART1, angle[1].pitch * Rad2Dree);//
 			U_Print_Char(USART1, " \n");
 			U_Print_Char(USART1, "Yaw ");
 			U_Print_float(USART1, angle[0].yaw * Rad2Dree);// yaw mpu 1
+			//U_Print_float(USART1, atan2(fMag[0].y, fMag[0].x) * Rad2Dree);
 			U_Print_Char(USART1, "  ");
 			U_Print_float(USART1, angle[1].roll * Rad2Dree);// pitch mpu 2
 			U_Print_Char(USART1, "  ");
@@ -680,13 +690,13 @@ void LowPass_Mag(Mag fMag[])
 		Get_Mag(Raw);
 		AK8963_turn_off(0);
 	
+//		Raw[0] = Raw[0]*magCalibration[0] - magbias[0];
+//		Raw[1] = Raw[1]*magCalibration[1] - magbias[1];
+//		Raw[2] = Raw[2]*magCalibration[2] - magbias[2];
+	
 		fMag[0].x = Raw[0] * alpha + (fMag[0].x * (1.0 - alpha));
 		fMag[0].y = Raw[1] * alpha + (fMag[0].y * (1.0 - alpha));
 		fMag[0].z = Raw[2] * alpha + (fMag[0].z * (1.0 - alpha));
-	
-//		fMag[0].x = Raw[0]*magCalibration[0] - magbias[0];
-//		fMag[0].y = Raw[1]*magCalibration[1] - magbias[1];
-//		fMag[0].z = Raw[2]*magCalibration[2] - magbias[2];
 	
 		U_Print_Char(USART1, "Mag MPU 0: ");
 		U_Print_float(USART1, fMag[0].x);
