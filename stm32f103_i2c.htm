@@ -3,7 +3,7 @@
 <title>Static Call Graph - [.\stm32f103_i2c.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\stm32f103_i2c.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5040049: Last Updated: Tue May 09 10:13:08 2017
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5040049: Last Updated: Wed May 10 15:24:13 2017
 <BR><P>
 <H3>Maximum Stack Usage =        856 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -899,7 +899,8 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[ca]"></a>GPIO_ResetBits</STRONG> (Thumb, 4 bytes, Stack size 0 bytes, stm32f10x_gpio.o(i.GPIO_ResetBits))
-<BR><BR>[Called By]<UL><LI><a href="#[c8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;led_toggle()
+<BR><BR>[Called By]<UL><LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
+<LI><a href="#[c8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;led_toggle()
 </UL>
 
 <P><STRONG><a name="[cb]"></a>GPIO_SetBits</STRONG> (Thumb, 4 bytes, Stack size 0 bytes, stm32f10x_gpio.o(i.GPIO_SetBits))
@@ -935,7 +936,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[ce]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LowPass_Gyro(Gyro*)
 </UL>
 
-<P><STRONG><a name="[9a]"></a>Get_Mag</STRONG> (Thumb, 292 bytes, Stack size 32 bytes, mpu9250.o(i.Get_Mag))
+<P><STRONG><a name="[9a]"></a>Get_Mag</STRONG> (Thumb, 298 bytes, Stack size 32 bytes, mpu9250.o(i.Get_Mag))
 <BR><BR>[Stack]<UL><LI>Max Depth = 96<LI>Call Chain = Get_Mag &rArr; operator new[] (unsigned) &rArr; operator new(unsigned) &rArr; malloc &rArr; __Heap_Full &rArr; __Heap_ProvideMemory &rArr; free
 </UL>
 <BR>[Calls]<UL><LI><a href="#[94]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_i2f
@@ -1043,7 +1044,6 @@ Global Symbols
 <LI><a href="#[8e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Write_Byte(unsigned char, unsigned char, unsigned char)
 </UL>
 <BR>[Called By]<UL><LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
-<LI><a href="#[cc]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;LowPass_Mag(Mag*)
 </UL>
 
 <P><STRONG><a name="[a4]"></a>MPU6050_GetDeviceID</STRONG> (Thumb, 24 bytes, Stack size 16 bytes, mpu6050.o(i.MPU6050_GetDeviceID))
@@ -1368,13 +1368,12 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[5b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>
 
-<P><STRONG><a name="[cc]"></a>LowPass_Mag(Mag*)</STRONG> (Thumb, 450 bytes, Stack size 56 bytes, main.o(i._Z11LowPass_MagP3Mag))
+<P><STRONG><a name="[cc]"></a>LowPass_Mag(Mag*)</STRONG> (Thumb, 438 bytes, Stack size 56 bytes, main.o(i._Z11LowPass_MagP3Mag))
 <BR><BR>[Stack]<UL><LI>Max Depth = 240 + Unknown Stack Size
 <LI>Call Chain = LowPass_Mag(Mag*) &rArr; U_Print_float(USART_TypeDef*, float) &rArr; __2sprintf &rArr; _printf_char_common &rArr; __printf
 </UL>
 <BR>[Calls]<UL><LI><a href="#[c6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;U_Print_float(USART_TypeDef*, float)
 <LI><a href="#[c7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;U_Print_Char(USART_TypeDef*, char*)
-<LI><a href="#[a1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Initialize_AK8963
 <LI><a href="#[9a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Get_Mag
 <LI><a href="#[8f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;AK8963_turn_on
 <LI><a href="#[8d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;AK8963_turn_off
@@ -1627,7 +1626,7 @@ Global Symbols
 <LI><a href="#[9e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Set_Clock
 </UL>
 
-<P><STRONG><a name="[5b]"></a>main</STRONG> (Thumb, 2688 bytes, Stack size 608 bytes, main.o(i.main))
+<P><STRONG><a name="[5b]"></a>main</STRONG> (Thumb, 2704 bytes, Stack size 608 bytes, main.o(i.main))
 <BR><BR>[Stack]<UL><LI>Max Depth = 856 + Unknown Stack Size
 <LI>Call Chain = main &rArr; LowPass_Accel(Accel*) &rArr; U_Print_float(USART_TypeDef*, float) &rArr; __2sprintf &rArr; _printf_char_common &rArr; __printf
 </UL>
@@ -1653,6 +1652,7 @@ Global Symbols
 <LI><a href="#[9b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;I2C_Init
 <LI><a href="#[ac]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;I2C_Cmd
 <LI><a href="#[cb]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GPIO_SetBits
+<LI><a href="#[ca]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GPIO_ResetBits
 <LI><a href="#[b5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GPIO_Init
 <LI><a href="#[90]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;Check_Connection
 <LI><a href="#[8f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;AK8963_turn_on

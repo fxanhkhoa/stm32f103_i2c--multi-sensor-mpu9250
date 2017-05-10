@@ -333,7 +333,7 @@ void Initialize_AK8963(float *destination)
 	Write_Byte(AK8963_ADDRESS_DEFAULT, AK8963_CNTL,  0x00);
 	//delay(10000);
 	
-	Write_Byte(AK8963_ADDRESS_DEFAULT, AK8963_CNTL,  (mscale << 4) | 0x06);
+	Write_Byte(AK8963_ADDRESS_DEFAULT, AK8963_CNTL,  (mscale << 4) | 0x02);
 	//delay(1000);
 }
 /***********************************************************************************
@@ -400,15 +400,16 @@ void Get_Mag(float *Mag)
 {
 	u8 *data = new u8[7];
 	//u16 temp;
+	//Write_Byte(AK8963_ADDRESS_DEFAULT, AK8963_CNTL, 0x01);
 	Read_data_buffer(AK8963_ADDRESS_DEFAULT, AK8963_ST1, data,  1);
 	if (data[0] & 0x01)
 	{
 		Read_data_buffer(AK8963_ADDRESS_DEFAULT, AK8963_XOUT_L, data,  7);
 		if (!(data[6] & 0x08))
 		{
-			Mag[0] = float(int16_t(data[0] + (data[1] << 8)));
-			Mag[1] = float(int16_t(data[2] + (data[3] << 8)));
-			Mag[2] = float(int16_t(data[4] + (data[5] << 8)));
+			Mag[0] = float(int16_t(data[1] << 8) | data[0]);
+			Mag[1] = float(int16_t(data[3] << 8) | data[2]);
+			Mag[2] = float(int16_t(data[5] << 8) | data[4]);
 		}
 		switch (mscale)
 		{
@@ -544,10 +545,10 @@ void Get_Accel(float *Accel, int ado_bit)
 	Accel[0] = float(temp);
 	
 	temp = int16_t((data[2] << 8) | data[3]);
-	Accel[1] = (temp);
+	Accel[1] = float(temp);
 	
 	temp = int16_t((data[4] << 8) | data[5]);
-	Accel[2] = (temp);
+	Accel[2] = float(temp);
 	
 	/*---------ACCELERO--------*/
 		if (currentAcceleroRange == MPU9250_ACCELERO_RANGE_2G) {

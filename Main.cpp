@@ -135,6 +135,7 @@ int main()
 *											Check_Connection
 **************************************************************************************************/
 	/*---- Reset MPU9250 ----*/
+	GPIO_ResetBits(GPIOC, GPIO_Pin_13);
 	MPU9250_Reset(0);
 	MPU9250_Reset(1);
 	
@@ -190,7 +191,7 @@ int main()
 		if (Check_Connection(WHO_AM_I_AK8963, (AK8963_ADDRESS_DEFAULT), 0x48))
 		{
 			U_Print_Char(USART1, "Found AK8963\n");
-			//Initialize_AK8963();
+			Initialize_AK8963(magCalibration);
 			U_Print_Char(USART1, "AK8963 Initialized...\n");
 		}
 		else
@@ -201,6 +202,7 @@ int main()
 			U_Print_Char(USART1, "Found MPU6050 \n");
 		MPU6050_Initialize();
 		U_Print_Char(USART1, "Initialized...\n");
+		
 /**************************************************************************************************
 *											Variables Init
 **************************************************************************************************/
@@ -686,7 +688,7 @@ void LowPass_Mag(Mag fMag[])
 {
 		float Raw[3];
 		AK8963_turn_on(0);
-		Initialize_AK8963(Raw);
+		//Initialize_AK8963(Raw);
 		Get_Mag(Raw);
 		AK8963_turn_off(0);
 	
@@ -707,7 +709,7 @@ void LowPass_Mag(Mag fMag[])
 		U_Print_Char(USART1, "\n");
 		
 		AK8963_turn_on(1);
-		Initialize_AK8963(Raw);
+		//Initialize_AK8963(Raw);
 		Get_Mag(Raw);
 		AK8963_turn_off(1);
 		
