@@ -31,14 +31,13 @@
 /* Includes */
 #include "MPU6050.h"
 #include "stm32f10x_i2c.h"
-#include "stm32f10x.h"
+
+u8 currentAcceleroRange_MPU6050 = MPU6050_ACCEL_FS_16;
+u8 currentGyroRange_MPU6050 = MPU6050_GYRO_FS_2000;
 
 /** @defgroup MPU6050_Library
  * @{
  */
- 
-uint8_t currentAcceleroRange_MPU6050 = 3;
-uint8_t currentGyroRange_MPU6050 = 3;
 
 /** Power on and prepare for general usage.
  * This will activate the device and take it out of sleep mode (which must be done
@@ -50,8 +49,8 @@ uint8_t currentGyroRange_MPU6050 = 3;
 void MPU6050_Initialize()
 {
     MPU6050_SetClockSource(MPU6050_CLOCK_PLL_XGYRO);
-    MPU6050_SetFullScaleGyroRange(MPU6050_GYRO_FS_250);
-    MPU6050_SetFullScaleAccelRange(MPU6050_ACCEL_FS_8);
+    MPU6050_SetFullScaleGyroRange(MPU6050_GYRO_FS_2000);
+    MPU6050_SetFullScaleAccelRange(MPU6050_ACCEL_FS_16);
     MPU6050_SetSleepModeStatus(DISABLE);
 }
 
@@ -201,7 +200,7 @@ bool MPU6050_GetSleepModeStatus()
 {
     uint8_t tmp;
     MPU6050_ReadBit(MPU6050_DEFAULT_ADDRESS, MPU6050_RA_PWR_MGMT_1, MPU6050_PWR1_SLEEP_BIT, &tmp);
-    return tmp == 0x00 ? true : false;
+    return tmp == 0x00 ? false : true;
 }
 
 /** Set sleep mode status.
@@ -220,20 +219,18 @@ void MPU6050_SetSleepModeStatus(FunctionalState NewState)
  * @param AccelGyro 16-bit signed integer array of length 6
  * @see MPU6050_RA_ACCEL_XOUT_H
  */
-void MPU6050_GetRawAccelGyro(float AccelGyro[])
+void MPU6050_GetRawAccelGyro(float* AccelGyro)
 {
-  u8 tmpBuffer[14];
-	int i;
-		
-		/*---- Get Data ----*/
+    u8 tmpBuffer[14];
+		int i;
     MPU6050_I2C_BufferRead(MPU6050_DEFAULT_ADDRESS, tmpBuffer, MPU6050_RA_ACCEL_XOUT_H, 14);
-		/* Get acceleration */
-			for ( i = 0; i < 3; i++)
-					AccelGyro[i] = ((s16) ((u16) tmpBuffer[2 * i] << 8) + tmpBuffer[2 * i + 1]);
-		/* Get Angular rate */
-			for ( i = 4; i < 7; i++)
-					AccelGyro[i - 1] = ((s16) ((u16) tmpBuffer[2 * i] << 8) + tmpBuffer[2 * i + 1]);
-		/*---- divider ----*/
+    /* Get acceleration */
+    for (i = 0; i < 3; i++)
+        AccelGyro[i] = ((s16) ((u16) tmpBuffer[2 * i] << 8) + tmpBuffer[2 * i + 1]);
+    /* Get Angular rate */
+    for (i = 4; i < 7; i++)
+        AccelGyro[i - 1] = ((s16) ((u16) tmpBuffer[2 * i] << 8) + tmpBuffer[2 * i + 1]);
+/*---- divider ----*/
 		/*---------ACCELERO--------*/
 		if (currentAcceleroRange_MPU6050 == MPU6050_ACCELERO_RANGE_2G) {
         AccelGyro[0] *= 2.0/32768.0;
@@ -294,8 +291,7 @@ void MPU6050_WriteBits(uint8_t slaveAddr, uint8_t regAddr, uint8_t bitStart, uin
     // 10101111 original value (sample)
     // 10100011 original & ~mask
     // 10101011 masked | value
-    uint8_t tmp;
-		uint8_t mask;
+    uint8_t tmp, mask;
     MPU6050_I2C_BufferRead(slaveAddr, &tmp, regAddr, 1);
     mask = ((1 << length) - 1) << (bitStart - length + 1);
     data <<= (bitStart - length + 1); // shift data into correct position
@@ -334,8 +330,7 @@ void MPU6050_ReadBits(uint8_t slaveAddr, uint8_t regAddr, uint8_t bitStart, uint
     //    xxx   args: bitStart=4, length=3
     //    010   masked
     //   -> 010 shifted
-    uint8_t tmp;
-		uint8_t mask;
+    uint8_t tmp, mask;
     MPU6050_I2C_BufferRead(slaveAddr, &tmp, regAddr, 1);
     mask = ((1 << length) - 1) << (bitStart - length + 1);
     tmp &= mask;
@@ -380,7 +375,7 @@ void MPU6050_I2C_Init()
     /* I2C configuration */
     I2C_InitStructure.I2C_Mode = I2C_Mode_I2C;
     I2C_InitStructure.I2C_DutyCycle = I2C_DutyCycle_2;
-    I2C_InitStructure.I2C_OwnAddress1 = 0x00; // MPU6050 7-bit adress = 0x68, 8-bit adress = 0xD0;
+    I2C_InitStructure.I2C_OwnAddress1 = MPU6050_DEFAULT_ADDRESS; // MPU6050 7-bit adress = 0x68, 8-bit adress = 0xD0;
     I2C_InitStructure.I2C_Ack = I2C_Ack_Enable;
     I2C_InitStructure.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
     I2C_InitStructure.I2C_ClockSpeed = MPU6050_I2C_Speed;
@@ -420,7 +415,11 @@ void MPU6050_I2C_ByteWrite(u8 slaveAddr, u8* pBuffer, u8 writeAddr)
     /* Test on EV8 and clear it */
     while (!I2C_CheckEvent(MPU6050_I2C, I2C_EVENT_MASTER_BYTE_TRANSMITTED));
 
-     
+    /* Send the byte to be written */
+    I2C_SendData(MPU6050_I2C, *pBuffer);
+
+    /* Test on EV8 and clear it */
+    while (!I2C_CheckEvent(MPU6050_I2C, I2C_EVENT_MASTER_BYTE_TRANSMITTED));
 
     /* Send STOP condition */
     I2C_GenerateSTOP(MPU6050_I2C, ENABLE);
