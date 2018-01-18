@@ -2,7 +2,7 @@
 .\usart_print.o: usart_print.h
 .\usart_print.o: .\CMSIS\CM3\DeviceSupport\ST\STM32F10x\stm32f10x.h
 .\usart_print.o: .\CMSIS\CM3\CoreSupport\core_cm3.h
-.\usart_print.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
+.\usart_print.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
 .\usart_print.o: .\CMSIS\CM3\DeviceSupport\ST\STM32F10x\system_stm32f10x.h
 .\usart_print.o: .\CMSIS\CM3\DeviceSupport\ST\STM32F10x\stm32f10x_conf.h
 .\usart_print.o: .\STM32F10x_StdPeriph_Driver\inc\stm32f10x_adc.h
@@ -29,4 +29,4 @@
 .\usart_print.o: .\STM32F10x_StdPeriph_Driver\inc\stm32f10x_usart.h
 .\usart_print.o: .\STM32F10x_StdPeriph_Driver\inc\stm32f10x_wwdg.h
 .\usart_print.o: .\STM32F10x_StdPeriph_Driver\inc\misc.h
-.\usart_print.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdio.h
+.\usart_print.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdio.h

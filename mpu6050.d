@@ -3,7 +3,7 @@
 .\mpu6050.o: MPU6050\HAL_MPU6050.h
 .\mpu6050.o: .\CMSIS\CM3\DeviceSupport\ST\STM32F10x\stm32f10x.h
 .\mpu6050.o: .\CMSIS\CM3\CoreSupport\core_cm3.h
-.\mpu6050.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
+.\mpu6050.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
 .\mpu6050.o: .\CMSIS\CM3\DeviceSupport\ST\STM32F10x\system_stm32f10x.h
 .\mpu6050.o: .\CMSIS\CM3\DeviceSupport\ST\STM32F10x\stm32f10x_conf.h
 .\mpu6050.o: .\STM32F10x_StdPeriph_Driver\inc\stm32f10x_adc.h
@@ -30,4 +30,4 @@
 .\mpu6050.o: .\STM32F10x_StdPeriph_Driver\inc\stm32f10x_usart.h
 .\mpu6050.o: .\STM32F10x_StdPeriph_Driver\inc\stm32f10x_wwdg.h
 .\mpu6050.o: .\STM32F10x_StdPeriph_Driver\inc\misc.h
-.\mpu6050.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdbool.h
+.\mpu6050.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h

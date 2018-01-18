@@ -264,11 +264,11 @@ int main()
 		//Get_Accel(RawAccel, 0);Get_Accel(RawAccel1, 1);
 		//Get_Gyro(RawGyro, 0);Get_Gyro(RawGyro1, 1);
 		//MPU6050_GetRawAccelGyro(AccelGyro);
-		U_Print_Char(USART1, "ACCEL & GYRO\n");
+		//U_Print_Char(USART1, "ACCEL & GYRO\n");
 		LowPass_Accel(fAcc);
 		LowPass_Gyro(fGyro);
 	
-		U_Print_Char(USART1, "MAG\n");
+		//U_Print_Char(USART1, "MAG\n");
 		LowPass_Mag(fMag);
 			
 			
@@ -403,24 +403,25 @@ int main()
 //		{
 			U_Print_Char(USART1, "Pitch ");
 			U_Print_float(USART1, angle[0].roll * Rad2Dree);// pitch mpu 1
-			//U_Print_float(USART1, angle[0].pitch * Rad2Dree);// pitch mpu 1
-			U_Print_Char(USART1, "  ");
-			U_Print_float(USART1, angle[1].yaw * Rad2Dree);// yaw mpu 2
-			U_Print_Char(USART1, "  ");
-			U_Print_float(USART1, angle[2].pitch * Rad2Dree);// roll mpu 3
+			//U_Print_float(USART1, acos(fAcc[0].x/R) * Rad2Dree);//pitch mpu1 no fill
+//			U_Print_Char(USART1, "  ");
+//			U_Print_float(USART1, angle[1].yaw * Rad2Dree);// yaw mpu 2
+//			U_Print_Char(USART1, "  ");
+//			U_Print_float(USART1, angle[2].pitch * Rad2Dree);// roll mpu 3
 			U_Print_Char(USART1, " \n");
 			U_Print_Char(USART1, "Roll ");
-			//U_Print_float(USART1, angle[0].pitch * Rad2Dree);
-			//U_Print_Char(USART1, "  ");
-			U_Print_float(USART1, angle[1].pitch * Rad2Dree);//
+			U_Print_float(USART1, angle[0].pitch * Rad2Dree);// roll mpu1
+			//U_Print_float(USART1, acos(fAcc[0].y/R));// roll mpu1 no fill
+			U_Print_Char(USART1, "  ");
+//			U_Print_float(USART1, angle[1].pitch * Rad2Dree);//
 			U_Print_Char(USART1, " \n");
 			U_Print_Char(USART1, "Yaw ");
 			U_Print_float(USART1, angle[0].yaw * Rad2Dree);// yaw mpu 1
-			//U_Print_float(USART1, atan2(fMag[0].y, fMag[0].x) * Rad2Dree);
+			//U_Print_float(USART1, atan2(fMag[0].y, fMag[0].x) * Rad2Dree);// yaw mpu1 no fill
 			U_Print_Char(USART1, "  ");
-			U_Print_float(USART1, angle[1].roll * Rad2Dree);// pitch mpu 2
-			U_Print_Char(USART1, "  ");
-			U_Print_float(USART1, angle[2].roll * Rad2Dree);// pitch mpu 3
+//			U_Print_float(USART1, angle[1].roll * Rad2Dree);// pitch mpu 2
+//			U_Print_Char(USART1, "  ");
+//			U_Print_float(USART1, angle[2].roll * Rad2Dree);// pitch mpu 3
 			U_Print_Char(USART1, " \n");
 //		}
 		//else U_Print_Char(USART1, "not \n");
@@ -629,13 +630,13 @@ void LowPass_Accel(Accel fAcc[])
 //		U_Print_float(USART1, fAcc[1].z);
 //		U_Print_Char(USART1, "\n");
 //		
-		U_Print_Char(USART1, "Accel MPU 2: ");
-		U_Print_float(USART1, fAcc[2].x);
-		U_Print_Char(USART1, "  ");
-		U_Print_float(USART1, fAcc[2].y);
-		U_Print_Char(USART1, "  ");
-		U_Print_float(USART1, fAcc[2].z);
-		U_Print_Char(USART1, "\n");
+//		U_Print_Char(USART1, "Accel MPU 2: ");
+//		U_Print_float(USART1, fAcc[2].x);
+//		U_Print_Char(USART1, "  ");
+//		U_Print_float(USART1, fAcc[2].y);
+//		U_Print_Char(USART1, "  ");
+//		U_Print_float(USART1, fAcc[2].z);
+//		U_Print_Char(USART1, "\n");
 }
 
 void LowPass_Gyro(Gyro fGyro[])
@@ -700,13 +701,13 @@ void LowPass_Mag(Mag fMag[])
 		fMag[0].y = Raw[1] * alpha + (fMag[0].y * (1.0 - alpha));
 		fMag[0].z = Raw[2] * alpha + (fMag[0].z * (1.0 - alpha));
 	
-		U_Print_Char(USART1, "Mag MPU 0: ");
-		U_Print_float(USART1, fMag[0].x);
-		U_Print_Char(USART1, "  ");
-		U_Print_float(USART1, fMag[0].y);
-		U_Print_Char(USART1, "  ");
-		U_Print_float(USART1, fMag[0].z);
-		U_Print_Char(USART1, "\n");
+//		U_Print_Char(USART1, "Mag MPU 0: ");
+//		U_Print_float(USART1, fMag[0].x);
+//		U_Print_Char(USART1, "  ");
+//		U_Print_float(USART1, fMag[0].y);
+//		U_Print_Char(USART1, "  ");
+//		U_Print_float(USART1, fMag[0].z);
+//		U_Print_Char(USART1, "\n");
 		
 		AK8963_turn_on(1);
 		//Initialize_AK8963(Raw);

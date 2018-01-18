@@ -2,7 +2,7 @@
 .\mpu9250.o: MPU9250\MPU9250.h
 .\mpu9250.o: .\CMSIS\CM3\DeviceSupport\ST\STM32F10x\stm32f10x.h
 .\mpu9250.o: .\CMSIS\CM3\CoreSupport\core_cm3.h
-.\mpu9250.o: C:\Keil_v5\ARM\ARMCC\bin\..\include\stdint.h
+.\mpu9250.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
 .\mpu9250.o: .\CMSIS\CM3\DeviceSupport\ST\STM32F10x\system_stm32f10x.h
 .\mpu9250.o: .\CMSIS\CM3\DeviceSupport\ST\STM32F10x\stm32f10x_conf.h
 .\mpu9250.o: .\STM32F10x_StdPeriph_Driver\inc\stm32f10x_adc.h
