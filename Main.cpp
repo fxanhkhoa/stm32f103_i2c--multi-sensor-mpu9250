@@ -1,6 +1,7 @@
 #include "stm32f10x.h"
 #include "stm32f10x_i2c.h"
 #include "stm32f10x_gpio.h"
+#include "stm32f10x_exti.h"
 #include "usart_print.h"	
 #include "MPU9250.h"
 #include "stm32f10x_tim.h"
@@ -9,6 +10,7 @@
 #include <math.h>
 #include "Kalman.c"
 #include "Kalman_New.h"
+
 
 #define Rad2Dree       57.295779513082320876798154814105
 #define PI	3.1415926535897932384626433832795
@@ -24,6 +26,7 @@ void LowPass_Accel(Accel fAcc[]);
 void LowPass_Gyro(Gyro fGyro[]);
 void LowPass_Mag(Mag fMag[]);
 void Print_Bias();
+void Interrupt_Init();
 
 uint16_t timer, time_pre =0, time_now = 0;
 float gyroBias[3] = {0, 0, 0}, accelBias[3] = {0, 0, 0}; // Bias corrections for gyro and accelerometer
@@ -56,7 +59,7 @@ int main()
 			
 	USART_InitTypeDef USART;
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1 | RCC_APB2Periph_GPIOA, ENABLE);
-	USART.USART_BaudRate = 38400;
+	USART.USART_BaudRate = 9600;
 	USART.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
 	USART.USART_StopBits = USART_StopBits_1;
 	USART.USART_WordLength = USART_WordLength_8b;
@@ -130,7 +133,11 @@ int main()
 			NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
 			NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 			NVIC_Init(&NVIC_InitStructure);
-		
+
+/**************************************************************************************************
+*											Interrupt_Init
+**************************************************************************************************/
+		Interrupt_Init();
 /**************************************************************************************************
 *											Check_Connection
 **************************************************************************************************/
@@ -168,40 +175,40 @@ int main()
 		else
 			U_Print_Char(USART1, "Check Connection AK\n");
 		
-		AK8963_turn_off(0);
-		
-		U_Print_Char(USART1,"let's go - 2\n");
-			//MPU6050_I2C_Init();
-		/*----- Check Connection of MPU9250 -----*/
-		if (Check_Connection(WHO_AM_I_MPU9250, MPU9250_ADDRESS_DEFAULT_ADO_HIGH, 0x73))
-		{
-			U_Print_Char(USART1, "Found MPU9250 - number 2 ");
-			Initialize(1);
-			//Write_Byte(INT_PIN_CFG, MPU9250_ADDRESS_DEFAULT, 0x22);
-			//u8 *a = new u8[1];
-			//Read_data_buffer(INT_PIN_CFG, a, MPU9250_ADDRESS_DEFAULT, 1);
-			//U_Print(USART1, a[0]);
-			U_Print_Char(USART1, "Initialized");
-		}
-		else
-			U_Print_Char(USART1, "Check Connection MPU");
-		
-		AK8963_turn_on(1);
-		/*----- Check Connection of AK8963 -----*/
-		if (Check_Connection(WHO_AM_I_AK8963, (AK8963_ADDRESS_DEFAULT), 0x48))
-		{
-			U_Print_Char(USART1, "Found AK8963\n");
-			Initialize_AK8963(magCalibration);
-			U_Print_Char(USART1, "AK8963 Initialized...\n");
-		}
-		else
-			U_Print_Char(USART1, "Check Connection AK\n");
-		AK8963_turn_off(1);
-		
-		if (MPU6050_TestConnection())
-			U_Print_Char(USART1, "Found MPU6050 \n");
-		MPU6050_Initialize();
-		U_Print_Char(USART1, "Initialized...\n");
+//		AK8963_turn_off(0);
+//		
+//		U_Print_Char(USART1,"let's go - 2\n");
+//			//MPU6050_I2C_Init();
+//		/*----- Check Connection of MPU9250 -----*/
+//		if (Check_Connection(WHO_AM_I_MPU9250, MPU9250_ADDRESS_DEFAULT_ADO_HIGH, 0x73))
+//		{
+//			U_Print_Char(USART1, "Found MPU9250 - number 2 ");
+//			Initialize(1);
+//			//Write_Byte(INT_PIN_CFG, MPU9250_ADDRESS_DEFAULT, 0x22);
+//			//u8 *a = new u8[1];
+//			//Read_data_buffer(INT_PIN_CFG, a, MPU9250_ADDRESS_DEFAULT, 1);
+//			//U_Print(USART1, a[0]);
+//			U_Print_Char(USART1, "Initialized");
+//		}
+//		else
+//			U_Print_Char(USART1, "Check Connection MPU");
+//		
+//		AK8963_turn_on(1);
+//		/*----- Check Connection of AK8963 -----*/
+//		if (Check_Connection(WHO_AM_I_AK8963, (AK8963_ADDRESS_DEFAULT), 0x48))
+//		{
+//			U_Print_Char(USART1, "Found AK8963\n");
+//			Initialize_AK8963(magCalibration);
+//			U_Print_Char(USART1, "AK8963 Initialized...\n");
+//		}
+//		else
+//			U_Print_Char(USART1, "Check Connection AK\n");
+//		AK8963_turn_off(1);
+//		
+//		if (MPU6050_TestConnection())
+//			U_Print_Char(USART1, "Found MPU6050 \n");
+//		MPU6050_Initialize();
+//		U_Print_Char(USART1, "Initialized...\n");
 		
 /**************************************************************************************************
 *											Variables Init
@@ -216,13 +223,13 @@ int main()
 		kalman filter_roll;
 		kalman filter_yaw;	
 				
-		kalman filter_pitch1;
-		kalman filter_roll1;
-		kalman filter_yaw1;	
-		
-		kalman filter_pitch2;
-		kalman filter_roll2;
-		kalman filter_yaw2;
+//		kalman filter_pitch1;
+//		kalman filter_roll1;
+//		kalman filter_yaw1;	
+//		
+//		kalman filter_pitch2;
+//		kalman filter_roll2;
+//		kalman filter_yaw2;
 	
 		time_pre = 0;
 		time_now = 0;
@@ -240,13 +247,13 @@ int main()
 		kalman_init(&filter_roll, R_matrix, Q_Gyro_matrix, Q_Accel_matrix);
 		kalman_init(&filter_yaw, R_matrix, Q_Gyro_matrix, Q_Accel_matrix);
 		
-		kalman_init(&filter_pitch1, R_matrix, Q_Gyro_matrix, Q_Accel_matrix);
-		kalman_init(&filter_roll1, R_matrix, Q_Gyro_matrix, Q_Accel_matrix);
-		kalman_init(&filter_yaw1, R_matrix, Q_Gyro_matrix, Q_Accel_matrix);
-		
-		kalman_init(&filter_pitch2, R_matrix, Q_Gyro_matrix, Q_Accel_matrix);
-		kalman_init(&filter_roll2, R_matrix, Q_Gyro_matrix, Q_Accel_matrix);
-		kalman_init(&filter_yaw2, R_matrix, Q_Gyro_matrix, Q_Accel_matrix);
+//		kalman_init(&filter_pitch1, R_matrix, Q_Gyro_matrix, Q_Accel_matrix);
+//		kalman_init(&filter_roll1, R_matrix, Q_Gyro_matrix, Q_Accel_matrix);
+//		kalman_init(&filter_yaw1, R_matrix, Q_Gyro_matrix, Q_Accel_matrix);
+//		
+//		kalman_init(&filter_pitch2, R_matrix, Q_Gyro_matrix, Q_Accel_matrix);
+//		kalman_init(&filter_roll2, R_matrix, Q_Gyro_matrix, Q_Accel_matrix);
+//		kalman_init(&filter_yaw2, R_matrix, Q_Gyro_matrix, Q_Accel_matrix);
 		
 		//Kalman kalmanPitch;
 		//Kalman kalmanRoll;
@@ -273,8 +280,8 @@ int main()
 			
 			
 		float R = sqrt(float((fAcc[0].x * fAcc[0].x + fAcc[0].y * fAcc[0].y + fAcc[0].z * fAcc[0].z )));
-		float R1 = sqrt(float((fAcc[1].x * fAcc[1].x + fAcc[1].y * fAcc[1].y + fAcc[1].z * fAcc[1].z )));
-		float R2 = sqrt(float((fAcc[2].x * fAcc[2].x + fAcc[2].y * fAcc[2].y + fAcc[2].z * fAcc[2].z )));
+//		float R1 = sqrt(float((fAcc[1].x * fAcc[1].x + fAcc[1].y * fAcc[1].y + fAcc[1].z * fAcc[1].z )));
+//		float R2 = sqrt(float((fAcc[2].x * fAcc[2].x + fAcc[2].y * fAcc[2].y + fAcc[2].z * fAcc[2].z )));
 		//U_Print_float(USART1, R);
 		//U_Print_Char(USART1, "\n");
 //		U_Print_float(USART1, acos(Mag[1]/Distance(Mag[0],Mag[1])));
@@ -340,15 +347,15 @@ int main()
     kalman_predict(&filter_roll, fGyro[0].y,  (time_now - time_pre));
     kalman_update(&filter_roll, acos(fAcc[0].y/R));
 		
-		kalman_predict(&filter_pitch1, fGyro[1].x,  ( time_now - time_pre));
-    kalman_update(&filter_pitch1, acos(fAcc[1].x/R));
-    kalman_predict(&filter_roll1, fGyro[1].y,  (time_now - time_pre));
-    kalman_update(&filter_roll1, acos(fAcc[1].y/R1));
-		
-		kalman_predict(&filter_pitch1, fGyro[2].x,  ( time_now - time_pre));
-    kalman_update(&filter_pitch2, acos(fAcc[2].x/R2));
-    kalman_predict(&filter_roll2, fGyro[2].y,  (time_now - time_pre));
-    kalman_update(&filter_roll2, acos(fAcc[2].y/R2));
+//		kalman_predict(&filter_pitch1, fGyro[1].x,  ( time_now - time_pre));
+//    kalman_update(&filter_pitch1, acos(fAcc[1].x/R));
+//    kalman_predict(&filter_roll1, fGyro[1].y,  (time_now - time_pre));
+//    kalman_update(&filter_roll1, acos(fAcc[1].y/R1));
+//		
+//		kalman_predict(&filter_pitch1, fGyro[2].x,  ( time_now - time_pre));
+//    kalman_update(&filter_pitch2, acos(fAcc[2].x/R2));
+//    kalman_predict(&filter_roll2, fGyro[2].y,  (time_now - time_pre));
+//    kalman_update(&filter_roll2, acos(fAcc[2].y/R2));
 		
 		//angle[0].pitch = kalmanPitch.GetAngle(acos(fAcc[0].x / R) * Rad2Dree, fGyro[0].x, (time_now - time_pre));
 		
@@ -361,10 +368,10 @@ int main()
 		/************************** Get Pitch, Roll, Yaw ***********************/
 		angle[0].pitch = kalman_get_angle(&filter_pitch);
 		angle[0].roll = kalman_get_angle(&filter_roll);
-		angle[1].pitch = kalman_get_angle(&filter_pitch1);
-		angle[1].roll = kalman_get_angle(&filter_roll1);
-		angle[2].pitch = kalman_get_angle(&filter_pitch2);
-		angle[2].roll = kalman_get_angle(&filter_roll2);
+//		angle[1].pitch = kalman_get_angle(&filter_pitch1);
+//		angle[1].roll = kalman_get_angle(&filter_roll1);
+//		angle[2].pitch = kalman_get_angle(&filter_pitch2);
+//		angle[2].roll = kalman_get_angle(&filter_roll2);
 		
 		//float xh,yh;
 		//xh= fMag[0].x*cos(angle[0].roll)+ fMag[0].y * sin(angle[0].pitch) * sin(angle[0].roll) - fMag[0].z * cos(angle[0].pitch) * sin(angle[0].roll);
@@ -373,13 +380,13 @@ int main()
 		//float heading = atan2(xh,yh);	
 		float heading = atan2(fMag[0].y, fMag[0].x);
 		//float heading1 = atan2(fMag[1].z, fMag[1].y);
-		float heading1 = atan2(fMag[1].y, fMag[1].x);
+		//float heading1 = atan2(fMag[1].y, fMag[1].x);
 		heading += declinationAngle; // declination get WEST
-		heading1 -= declinationAngle;
+		//heading1 -= declinationAngle;
 		if (heading < 0) heading += 2*PI;
 		if (heading > 2*PI) heading -= 2*PI;
-		if (heading1 < 0) heading1 += 2*PI;
-		if (heading1 > 2*PI) heading1 -= 2*PI;
+//		if (heading1 < 0) heading1 += 2*PI;
+//		if (heading1 > 2*PI) heading1 -= 2*PI;
 		//U_Print_float(USART1, heading * Rad2Dree);
 		//U_Print_Char(USART1, "   ");
 		//U_Print_float(USART1, heading1 * Rad2Dree);
@@ -387,8 +394,8 @@ int main()
 		
 		kalman_predict(&filter_yaw, fGyro[0].z,  (time_now - time_pre));
     kalman_update(&filter_yaw, heading);
-		kalman_predict(&filter_yaw1, fGyro[1].z,  (time_now - time_pre));
-    kalman_update(&filter_yaw1, heading1);
+//		kalman_predict(&filter_yaw1, fGyro[1].z,  (time_now - time_pre));
+//    kalman_update(&filter_yaw1, heading1);
 //		kalman_predict(&filter_yaw, (float)acos(fMag[0].y/Distance(fMag[0].x,fMag[0].y)),  (time_now - time_pre));
 //    kalman_update(&filter_yaw, (float)acos(fMag[0].y/Distance(fMag[1].x,fMag[1].y)));
 		time_pre = time_now; // get current time
@@ -397,36 +404,40 @@ int main()
 			time_pre = time_now = 0;
 		
 		angle[0].yaw = kalman_get_angle(&filter_yaw);
-		angle[1].yaw = kalman_get_angle(&filter_yaw1);
+		//angle[1].yaw = kalman_get_angle(&filter_yaw1);
 		
 		//if (flag == 1)
 //		{
-			U_Print_Char(USART1, "Pitch ");
-			U_Print_float(USART1, angle[0].roll * Rad2Dree);// pitch mpu 1
+			//U_Print_Char(USART1, "Pitch ");
+			//U_Print_float(USART1, angle[0].roll * Rad2Dree);// pitch mpu 1
+		U_Print(USART1,int( angle[0].roll * Rad2Dree));// pitch mpu 1
 			//U_Print_float(USART1, acos(fAcc[0].x/R) * Rad2Dree);//pitch mpu1 no fill
 //			U_Print_Char(USART1, "  ");
 //			U_Print_float(USART1, angle[1].yaw * Rad2Dree);// yaw mpu 2
 //			U_Print_Char(USART1, "  ");
 //			U_Print_float(USART1, angle[2].pitch * Rad2Dree);// roll mpu 3
-			U_Print_Char(USART1, " \n");
-			U_Print_Char(USART1, "Roll ");
-			U_Print_float(USART1, angle[0].pitch * Rad2Dree);// roll mpu1
+			//U_Print_Char(USART1, " \n");
+		U_Print_Char(USART1," "); // Print Space
+			//U_Print_Char(USART1, "Roll ");
+			//U_Print_float(USART1, angle[0].pitch * Rad2Dree);// roll mpu1
+		U_Print(USART1,int (angle[0].pitch * Rad2Dree));// roll mpu1
 			//U_Print_float(USART1, acos(fAcc[0].y/R));// roll mpu1 no fill
-			U_Print_Char(USART1, "  ");
+			U_Print_Char(USART1, " "); // Print Space
 //			U_Print_float(USART1, angle[1].pitch * Rad2Dree);//
-			U_Print_Char(USART1, " \n");
-			U_Print_Char(USART1, "Yaw ");
-			U_Print_float(USART1, angle[0].yaw * Rad2Dree);// yaw mpu 1
+			//U_Print_Char(USART1, " \n");
+			//U_Print_Char(USART1, "Yaw ");
+			//U_Print_float(USART1, angle[0].yaw * Rad2Dree);// yaw mpu 1
+			U_Print(USART1,int( angle[0].yaw * Rad2Dree));// yaw mpu 1
 			//U_Print_float(USART1, atan2(fMag[0].y, fMag[0].x) * Rad2Dree);// yaw mpu1 no fill
-			U_Print_Char(USART1, "  ");
+			U_Print_Char(USART1, "*");
 //			U_Print_float(USART1, angle[1].roll * Rad2Dree);// pitch mpu 2
 //			U_Print_Char(USART1, "  ");
 //			U_Print_float(USART1, angle[2].roll * Rad2Dree);// pitch mpu 3
-			U_Print_Char(USART1, " \n");
+			//U_Print_Char(USART1, " \n");
 //		}
 		//else U_Print_Char(USART1, "not \n");
 		timer = 0;
-		while (timer < 150);
+		while (timer < 50);
 		led_toggle();
 	}
 }
@@ -604,15 +615,15 @@ void LowPass_Accel(Accel fAcc[])
 		fAcc[0].y = RawAccel[1] - accelBias[1];
 		fAcc[0].z = RawAccel[2] - accelBias[2];
 		
-		Get_Accel(RawAccel, 1);
-		fAcc[1].x = RawAccel[0] * alpha + (fAcc[1].x * (1.0 - alpha));
-		fAcc[1].y = RawAccel[1] * alpha + (fAcc[1].y * (1.0 - alpha));
-		fAcc[1].z = RawAccel[2] * alpha + (fAcc[1].z * (1.0 - alpha));
-		
-		MPU6050_GetRawAccelGyro(RawAccel);
-		fAcc[2].x = RawAccel[0] * alpha + (fAcc[2].x * (1.0 - alpha));
-		fAcc[2].y = RawAccel[1] * alpha + (fAcc[2].y * (1.0 - alpha));
-		fAcc[2].z = RawAccel[2] * alpha + (fAcc[2].z * (1.0 - alpha));
+//		Get_Accel(RawAccel, 1);
+//		fAcc[1].x = RawAccel[0] * alpha + (fAcc[1].x * (1.0 - alpha));
+//		fAcc[1].y = RawAccel[1] * alpha + (fAcc[1].y * (1.0 - alpha));
+//		fAcc[1].z = RawAccel[2] * alpha + (fAcc[1].z * (1.0 - alpha));
+//		
+//		MPU6050_GetRawAccelGyro(RawAccel);
+//		fAcc[2].x = RawAccel[0] * alpha + (fAcc[2].x * (1.0 - alpha));
+//		fAcc[2].y = RawAccel[1] * alpha + (fAcc[2].y * (1.0 - alpha));
+//		fAcc[2].z = RawAccel[2] * alpha + (fAcc[2].z * (1.0 - alpha));
 		
 //		U_Print_Char(USART1, "Accel MPU 0: ");
 //		U_Print_float(USART1, fAcc[0].x);
@@ -650,15 +661,15 @@ void LowPass_Gyro(Gyro fGyro[])
 //		fGyro[0].y = Raw[1] - gyroBias[1];
 //		fGyro[0].z = Raw[2]	- gyroBias[2];
 		
-		Get_Gyro(Raw, 1);
-		fGyro[1].x = Raw[0] * alpha + (fGyro[1].x * (1.0 - alpha));
-		fGyro[1].y = Raw[1] * alpha + (fGyro[1].y * (1.0 - alpha));
-		fGyro[1].z = Raw[2] * alpha + (fGyro[1].z * (1.0 - alpha));
-		
-		MPU6050_GetRawAccelGyro(Raw);
-		fGyro[2].x = Raw[3] * alpha + (fGyro[2].x * (1.0 - alpha));
-		fGyro[2].y = Raw[4] * alpha + (fGyro[2].y * (1.0 - alpha));
-		fGyro[2].z = Raw[5] * alpha + (fGyro[2].z * (1.0 - alpha));
+//		Get_Gyro(Raw, 1);
+//		fGyro[1].x = Raw[0] * alpha + (fGyro[1].x * (1.0 - alpha));
+//		fGyro[1].y = Raw[1] * alpha + (fGyro[1].y * (1.0 - alpha));
+//		fGyro[1].z = Raw[2] * alpha + (fGyro[1].z * (1.0 - alpha));
+//		
+//		MPU6050_GetRawAccelGyro(Raw);
+//		fGyro[2].x = Raw[3] * alpha + (fGyro[2].x * (1.0 - alpha));
+//		fGyro[2].y = Raw[4] * alpha + (fGyro[2].y * (1.0 - alpha));
+//		fGyro[2].z = Raw[5] * alpha + (fGyro[2].z * (1.0 - alpha));
 		
 //		U_Print_Char(USART1, "Gyro MPU 0: ");
 //		U_Print_float(USART1, fGyro[0].x);
@@ -691,7 +702,7 @@ void LowPass_Mag(Mag fMag[])
 		AK8963_turn_on(0);
 		//Initialize_AK8963(Raw);
 		Get_Mag(Raw);
-		AK8963_turn_off(0);
+		//AK8963_turn_off(0);
 	
 //		Raw[0] = Raw[0]*magCalibration[0] - magbias[0];
 //		Raw[1] = Raw[1]*magCalibration[1] - magbias[1];
@@ -709,14 +720,14 @@ void LowPass_Mag(Mag fMag[])
 //		U_Print_float(USART1, fMag[0].z);
 //		U_Print_Char(USART1, "\n");
 		
-		AK8963_turn_on(1);
-		//Initialize_AK8963(Raw);
-		Get_Mag(Raw);
-		AK8963_turn_off(1);
-		
-		fMag[1].x = Raw[0] * alpha + (fMag[1].x * (1.0 - alpha));
-		fMag[1].y = Raw[1] * alpha + (fMag[1].y * (1.0 - alpha));
-		fMag[1].z = Raw[2] * alpha + (fMag[1].z * (1.0 - alpha));
+//		AK8963_turn_on(1);
+//		//Initialize_AK8963(Raw);
+//		Get_Mag(Raw);
+//		AK8963_turn_off(1);
+//		
+//		fMag[1].x = Raw[0] * alpha + (fMag[1].x * (1.0 - alpha));
+//		fMag[1].y = Raw[1] * alpha + (fMag[1].y * (1.0 - alpha));
+//		fMag[1].z = Raw[2] * alpha + (fMag[1].z * (1.0 - alpha));
 	
 //		U_Print_Char(USART1, "Mag MPU 1: ");
 //		U_Print_float(USART1, fMag[1].x);
@@ -742,4 +753,90 @@ void Print_Bias()
 	U_Print_Char(USART1,"   ");
 	U_Print_float(USART1, gyroBias[0]);
 	U_Print_Char(USART1,"   ");
+}
+
+void Interrupt_Init()
+{
+NVIC_InitTypeDef NVIC_InitStructure;
+/*---- NVIC EXTERNAL INTERRUPT ----*/
+	/*---- EXTI0 ----*/
+		NVIC_InitStructure.NVIC_IRQChannel = EXTI0_IRQn;
+		NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;
+		NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+		NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+		NVIC_Init(&NVIC_InitStructure);
+	/*---- EXTI1 ----*/
+		NVIC_InitStructure.NVIC_IRQChannel = EXTI1_IRQn;
+		NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;
+		NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+		NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+		NVIC_Init(&NVIC_InitStructure);
+	/*---- EXTI2 ----*/
+//		NVIC_InitStructure.NVIC_IRQChannel = EXTI2_IRQn;
+//		NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;
+//		NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+//		NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+//		NVIC_Init(&NVIC_InitStructure);
+/*---- EXTERNAL INTERRUPT ----*/
+	// Configure PA0, PA1, PA2 as input with internal pullup resistor
+	GPIO_InitTypeDef GPIO;
+	GPIO.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1;
+	GPIO.GPIO_Mode = GPIO_Mode_IPU;
+	GPIO.GPIO_Speed = GPIO_Speed_2MHz;
+	GPIO_Init(GPIOA, &GPIO);
+	// Configure PB0, PB1 as input with internal pullup resistor
+	GPIO.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1;
+	GPIO.GPIO_Mode = GPIO_Mode_IPU;
+	GPIO.GPIO_Speed = GPIO_Speed_2MHz;
+	GPIO_Init(GPIOB, &GPIO);
+	/*---- Connect Pin With Interrupt_NVIC ----*/
+	GPIO_EXTILineConfig(GPIO_PortSourceGPIOA, GPIO_PinSource0); // Pin A0
+	GPIO_EXTILineConfig(GPIO_PortSourceGPIOA, GPIO_PinSource1); // Pin A1
+	//GPIO_EXTILineConfig(GPIO_PortSourceGPIOA, GPIO_PinSource2); // Pin A2
+	GPIO_EXTILineConfig(GPIO_PortSourceGPIOB, GPIO_PinSource0); // Pin B0
+	GPIO_EXTILineConfig(GPIO_PortSourceGPIOB, GPIO_PinSource1); // Pin B1
+	/*---- Confirgure EXTI sturct ----*/
+	EXTI_InitTypeDef EXTI_InitStruct;
+	EXTI_InitStruct.EXTI_Line = EXTI_Line0 | EXTI_Line1;
+	EXTI_InitStruct.EXTI_Mode = EXTI_Mode_Interrupt;
+	EXTI_InitStruct.EXTI_Trigger = EXTI_Trigger_Falling;
+	EXTI_InitStruct.EXTI_LineCmd = ENABLE;
+	EXTI_Init(&EXTI_InitStruct);
+}
+
+extern "C" void EXTI0_IRQHandler()
+{
+	if (EXTI_GetITStatus(EXTI_Line0) != RESET) // judge whether a line break
+	{
+		if (!(GPIO_ReadInputData(GPIOA) & GPIO_Pin_0))
+		{
+			U_Print_Char(USART1, "Calibration*");
+		}
+		if (!(GPIO_ReadInputData(GPIOB) & GPIO_Pin_0))
+		{
+			
+		}
+		EXTI_ClearITPendingBit(EXTI_Line0);
+	}
+}
+
+extern "C" void EXTI1_IRQHandler()
+{
+	if (EXTI_GetITStatus(EXTI_Line1) != RESET) // judge whether a line break
+	{
+		if (!(GPIO_ReadInputData(GPIOA) & GPIO_Pin_1))
+		{
+			//led_toggle();
+			U_Print_Char(USART2, " 1st Point \n");
+		}
+		if (!(GPIO_ReadInputData(GPIOB) & GPIO_Pin_1))
+		{
+		}
+		EXTI_ClearITPendingBit(EXTI_Line1);
+	}
+}
+
+extern "C" void EXTI2_IRQHandler()
+{
+	
 }

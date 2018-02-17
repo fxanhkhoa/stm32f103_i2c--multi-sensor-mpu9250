@@ -8,6 +8,7 @@
 ".\stm32f10x_usart.o"
 ".\misc.o"
 ".\stm32f10x_tim.o"
+".\stm32f10x_exti.o"
 ".\mpu9250.o"
 ".\kalman.o"
 ".\kalman_new.o"
