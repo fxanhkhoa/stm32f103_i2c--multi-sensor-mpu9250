@@ -429,7 +429,19 @@ int main()
 			//U_Print_float(USART1, angle[0].yaw * Rad2Dree);// yaw mpu 1
 			U_Print(USART1,int( angle[0].yaw * Rad2Dree));// yaw mpu 1
 			//U_Print_float(USART1, atan2(fMag[0].y, fMag[0].x) * Rad2Dree);// yaw mpu1 no fill
-			U_Print_Char(USART1, "*");
+			
+			if (GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_0))
+			{
+				U_Print_Char(USART1, "*");
+			}
+			else if (GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_1))
+			{
+				U_Print_Char(USART1, "@");
+			}
+			else
+			{
+				U_Print_Char(USART1, "!");
+			}
 //			U_Print_float(USART1, angle[1].roll * Rad2Dree);// pitch mpu 2
 //			U_Print_Char(USART1, "  ");
 //			U_Print_float(USART1, angle[2].roll * Rad2Dree);// pitch mpu 3
@@ -758,29 +770,32 @@ void Print_Bias()
 void Interrupt_Init()
 {
 NVIC_InitTypeDef NVIC_InitStructure;
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+	//RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 /*---- NVIC EXTERNAL INTERRUPT ----*/
 	/*---- EXTI0 ----*/
 		NVIC_InitStructure.NVIC_IRQChannel = EXTI0_IRQn;
-		NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;
-		NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+		NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x0F;
+		NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x0F;
 		NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 		NVIC_Init(&NVIC_InitStructure);
 	/*---- EXTI1 ----*/
 		NVIC_InitStructure.NVIC_IRQChannel = EXTI1_IRQn;
-		NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;
-		NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+		NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x0F;
+		NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x0F;
 		NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 		NVIC_Init(&NVIC_InitStructure);
-	/*---- EXTI2 ----*/
-//		NVIC_InitStructure.NVIC_IRQChannel = EXTI2_IRQn;
-//		NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;
-//		NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
-//		NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-//		NVIC_Init(&NVIC_InitStructure);
+	/*---- EXTI3 ----*/
+		NVIC_InitStructure.NVIC_IRQChannel = EXTI3_IRQn;
+		NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x0F;
+		NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x0F;
+		NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+		NVIC_Init(&NVIC_InitStructure);
 /*---- EXTERNAL INTERRUPT ----*/
-	// Configure PA0, PA1, PA2 as input with internal pullup resistor
+	// Configure PA0, PA1, PA3 as input with internal pullup resistor
 	GPIO_InitTypeDef GPIO;
-	GPIO.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1;
+	GPIO.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_3;
 	GPIO.GPIO_Mode = GPIO_Mode_IPU;
 	GPIO.GPIO_Speed = GPIO_Speed_2MHz;
 	GPIO_Init(GPIOA, &GPIO);
@@ -793,11 +808,12 @@ NVIC_InitTypeDef NVIC_InitStructure;
 	GPIO_EXTILineConfig(GPIO_PortSourceGPIOA, GPIO_PinSource0); // Pin A0
 	GPIO_EXTILineConfig(GPIO_PortSourceGPIOA, GPIO_PinSource1); // Pin A1
 	//GPIO_EXTILineConfig(GPIO_PortSourceGPIOA, GPIO_PinSource2); // Pin A2
-	GPIO_EXTILineConfig(GPIO_PortSourceGPIOB, GPIO_PinSource0); // Pin B0
-	GPIO_EXTILineConfig(GPIO_PortSourceGPIOB, GPIO_PinSource1); // Pin B1
+	GPIO_EXTILineConfig(GPIO_PortSourceGPIOA, GPIO_PinSource3);
+	//GPIO_EXTILineConfig(GPIO_PortSourceGPIOB, GPIO_PinSource0); // Pin B0
+	//GPIO_EXTILineConfig(GPIO_PortSourceGPIOB, GPIO_PinSource1); // Pin B1
 	/*---- Confirgure EXTI sturct ----*/
 	EXTI_InitTypeDef EXTI_InitStruct;
-	EXTI_InitStruct.EXTI_Line = EXTI_Line0 | EXTI_Line1;
+	EXTI_InitStruct.EXTI_Line = EXTI_Line0 | EXTI_Line1 | EXTI_Line3;
 	EXTI_InitStruct.EXTI_Mode = EXTI_Mode_Interrupt;
 	EXTI_InitStruct.EXTI_Trigger = EXTI_Trigger_Falling;
 	EXTI_InitStruct.EXTI_LineCmd = ENABLE;
@@ -810,11 +826,11 @@ extern "C" void EXTI0_IRQHandler()
 	{
 		if (!(GPIO_ReadInputData(GPIOA) & GPIO_Pin_0))
 		{
-			U_Print_Char(USART1, "Calibration*");
+			U_Print_Char(USART1, "UP*");
 		}
 		if (!(GPIO_ReadInputData(GPIOB) & GPIO_Pin_0))
 		{
-			
+			U_Print_Char(USART1, "LEFT");
 		}
 		EXTI_ClearITPendingBit(EXTI_Line0);
 	}
@@ -827,16 +843,26 @@ extern "C" void EXTI1_IRQHandler()
 		if (!(GPIO_ReadInputData(GPIOA) & GPIO_Pin_1))
 		{
 			//led_toggle();
-			U_Print_Char(USART2, " 1st Point \n");
+			U_Print_Char(USART1, "DOWN*");
 		}
 		if (!(GPIO_ReadInputData(GPIOB) & GPIO_Pin_1))
 		{
+			U_Print_Char(USART1, "LEFT");
 		}
 		EXTI_ClearITPendingBit(EXTI_Line1);
 	}
 }
 
-extern "C" void EXTI2_IRQHandler()
+extern "C" void EXTI3_IRQHandler()
 {
+	if (EXTI_GetITStatus(EXTI_Line3) != RESET) // judge whether a line break
+	{
+		if (!(GPIO_ReadInputData(GPIOA) & GPIO_Pin_3))
+		{
+			//led_toggle();
+			U_Print_Char(USART1, "CALIBRATION*");
+		}
+		EXTI_ClearITPendingBit(EXTI_Line3);
+	}
 	
 }
