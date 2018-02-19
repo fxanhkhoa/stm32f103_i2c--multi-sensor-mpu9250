@@ -826,7 +826,7 @@ extern "C" void EXTI0_IRQHandler()
 	{
 		if (!(GPIO_ReadInputData(GPIOA) & GPIO_Pin_0))
 		{
-			U_Print_Char(USART1, "UP*");
+			U_Print_Char(USART1, "UP**********");
 		}
 		if (!(GPIO_ReadInputData(GPIOB) & GPIO_Pin_0))
 		{
@@ -843,7 +843,7 @@ extern "C" void EXTI1_IRQHandler()
 		if (!(GPIO_ReadInputData(GPIOA) & GPIO_Pin_1))
 		{
 			//led_toggle();
-			U_Print_Char(USART1, "DOWN*");
+			U_Print_Char(USART1, "DOWN********");
 		}
 		if (!(GPIO_ReadInputData(GPIOB) & GPIO_Pin_1))
 		{
