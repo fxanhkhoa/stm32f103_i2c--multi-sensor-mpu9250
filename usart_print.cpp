@@ -1,9 +1,9 @@
 #include "usart_print.h"
 
-void U_Print(USART_TypeDef * USARTx, uint8_t a)
+void U_Print(USART_TypeDef * USARTx, int a)
 {
 	char temp[20] = "";
-	int leng = sprintf(temp, "%d", a);
+	int leng = sprintf(temp, "%03d", a);
 	for (int i = 0; i < leng; i++)
 	{
 			while (USART_GetFlagStatus(USARTx, USART_FLAG_TXE) == RESET);
@@ -27,7 +27,7 @@ void U_Print_Char(USART_TypeDef * USARTx, char *s)
 void U_Print_float(USART_TypeDef * USARTx, float a)
 {
 	char temp[20] = "";
-	int leng = sprintf(temp, "%0.2f", a);
+	int leng = sprintf(temp, "%3.2f", a);
 	for (int i = 0; i < leng; i++)
 	{
 			while (USART_GetFlagStatus(USARTx, USART_FLAG_TXE) == RESET);

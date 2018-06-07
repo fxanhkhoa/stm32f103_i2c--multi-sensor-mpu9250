@@ -8,6 +8,7 @@
 ".\stm32f10x_usart.o"
 ".\misc.o"
 ".\stm32f10x_tim.o"
+".\stm32f10x_exti.o"
 ".\mpu9250.o"
 ".\kalman.o"
 ".\kalman_new.o"
@@ -15,6 +16,6 @@
 ".\startup_stm32f10x_md.o"
 ".\system_stm32f10x.o"
 --strict --scatter ".\stm32f103_i2c.sct"
---summary_stderr --info summarysizes --map --xref --callgraph --symbols
+--summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
 --info sizes --info totals --info unused --info veneers
 --list ".\stm32f103_i2c.map" -o .\stm32f103_i2c.axf
