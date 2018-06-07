@@ -144,7 +144,7 @@ int main()
 	/*---- Reset MPU9250 ----*/
 	GPIO_ResetBits(GPIOC, GPIO_Pin_13);
 	MPU9250_Reset(0);
-	MPU9250_Reset(1);
+	//MPU9250_Reset(1);
 	
 		U_Print_Char(USART1,"let's go\n");
 			
@@ -430,17 +430,17 @@ int main()
 			U_Print(USART1,int( angle[0].yaw * Rad2Dree));// yaw mpu 1
 			//U_Print_float(USART1, atan2(fMag[0].y, fMag[0].x) * Rad2Dree);// yaw mpu1 no fill
 			
-			if (GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_0))
+			if (!GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_0))
 			{
-				U_Print_Char(USART1, "*");
+				U_Print_Char(USART1, "#");
 			}
-			else if (GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_1))
+			else if (!GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_1))
 			{
 				U_Print_Char(USART1, "@");
 			}
-			else
+			else 
 			{
-				U_Print_Char(USART1, "!");
+				U_Print_Char(USART1,"*");
 			}
 //			U_Print_float(USART1, angle[1].roll * Rad2Dree);// pitch mpu 2
 //			U_Print_Char(USART1, "  ");
@@ -449,7 +449,7 @@ int main()
 //		}
 		//else U_Print_Char(USART1, "not \n");
 		timer = 0;
-		while (timer < 50);
+		while (timer < 100);
 		led_toggle();
 	}
 }
@@ -772,7 +772,7 @@ void Interrupt_Init()
 NVIC_InitTypeDef NVIC_InitStructure;
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
-	//RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 /*---- NVIC EXTERNAL INTERRUPT ----*/
 	/*---- EXTI0 ----*/
 		NVIC_InitStructure.NVIC_IRQChannel = EXTI0_IRQn;
